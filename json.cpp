@@ -29,6 +29,7 @@ public:
 			boolVal=false;
 			isData=false;
 			nextObj=NULL;
+			objVal=NULL;
 		}
 		Object* operator[](const char* key)
 		{
@@ -42,21 +43,25 @@ public:
 			return NULL;
 		}
 	};
-//private:
+private:
 	char* text;
 	const char* error;
 	Object* obj;
+	std::vector<char*> memory;
 	std::unordered_map<std::string,Object*> hashMap;
 	std::unordered_map<char*,char*> bracket;
 public:
 	Json(unsigned bufflen)
 	{
-		text=(char*)malloc(sizeof(char)*bufflen);
+		error=NULL;
+		text=(char*)malloc(sizeof(char)*bufflen+10);
+		memset(text,0,sizeof(char)*bufflen+10);
 	}
 	Json(const char* jsonText)
 	{
 		error=NULL;
 		text=(char*)malloc(strlen(jsonText)+10);
+		memset(text,0,strlen(jsonText)+10);
 		if(text==NULL)
 		{
 			error="malloc wrong";
@@ -65,7 +70,11 @@ public:
 		memset(text,0,strlen(jsonText)+10);
 		strcpy(text,jsonText);
 		deleteSpace();
-		pairBracket();
+		if(false==pairBracket())
+		{
+			error="pair bracket wrong";
+			return;
+		}
 		printf("%s\n",text);
 		char* end=bracket[text];
 		obj=analyseObj(text,end);
@@ -80,12 +89,69 @@ public:
 		deleteNode(obj);
 		if(text!=NULL)
 			free(text);
+		if(!memory.empty())
+			for(unsigned i=0;i<memory.size();i++)
+				free(memory[i]);
 	}
 	Object* operator[](const char* key)
 	{
 		if(hashMap.find(std::string(key))==hashMap.end())
 			return NULL;
 		return hashMap.find(std::string(key))->second;
+	}
+template<class T>
+	bool addKeyVal(char* obj,TypeJson type,const char* key,T val)
+	{
+		if(obj[strlen(obj)-1]=='}')
+		{
+			if(obj[strlen(obj)-2]!='{')
+				obj[strlen(obj)-1]=',';
+			else
+				obj[strlen(obj)-1]=0;
+		}
+		sprintf(obj,"%s%s:",obj,key);
+		switch(type)
+		{
+		case INT:
+			sprintf(obj,"%s%d",obj,val);
+			break;
+		case FLOAT:
+			sprintf(obj,"%s%f",obj,val);
+			break;
+		case STRING:
+			sprintf(obj,"%s%s",obj,val);
+			break;
+		case BOOL:
+			if(val==true)
+				strcat(obj,"true");
+			else
+				strcat(obj,"false");
+			break;
+		default:
+			error="can not insert this type";
+			strcat(obj,"}");
+			return false;
+		}
+		strcat(obj,"}");
+		return true;
+	}
+	inline Object* getRootObj()
+	{
+		return obj;
+	}
+	char* createObject(unsigned maxBuffLen)
+	{
+		char* now=(char*)malloc(sizeof(char)*maxBuffLen);
+		if(now==NULL)
+		{
+			error="malloc worng";
+			return NULL;
+		}
+		else
+			memory.push_back(now);
+		memset(now,0,sizeof(char)*maxBuffLen);
+		strcpy(now,"{}");
+		return now;
 	}
 	inline const char* lastError()
 	{
@@ -324,7 +390,7 @@ private:
 		delete root;
 		root=NULL;
 	}
-	void pairBracket()
+	bool pairBracket()
 	{
 		std::stack<char*> sta;
 		for(unsigned i=0;i<strlen(text);i++)
@@ -333,12 +399,17 @@ private:
 				sta.push(text+i);
 			else if(text[i]==']'||text[i]=='}')
 			{
+				if(text[i]==']'&&*sta.top()!='[')
+					return false;
+				if(text[i]=='}'&&*sta.top()!='{')
+					return false;
 				bracket.insert(std::pair<char*,char*>{sta.top(),&text[i]});
 				sta.pop();
 			}
 			else
 				continue;
 		}
+		return true;
 	}
 };
 class JsonOld{//a easy json class to create json
@@ -1032,7 +1103,6 @@ int main()
 	file.getFileMsg("./a.json",temp,1000);
 	printf("%s\n",temp);
 	Json json(temp);
-	printf("%s\n",json.text);
 	Json::Object* name=json["last"]->objVal;
 	std::cout<<(*name)["ad"]->strVal<<std::endl;
 	if(name==NULL)
@@ -1055,5 +1125,11 @@ int main()
 		auto obj=*json["try"]->arr[i];
 		std::cout<<" "<<obj["ad"]->strVal<<std::endl;
 	}
+	char* result=json.createObject(300);
+	if(result==NULL)
+		return -1;
+	json.addKeyVal(result,Json::INT,"ha",89);
+	json.addKeyVal(result,Json::STRING,"io","ko");
+	printf("json:%s\n",result);
 	return 0;
 }
