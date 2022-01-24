@@ -54,6 +54,14 @@ private:
 	std::unordered_map<std::string,Object*> hashMap;
 	std::unordered_map<char*,char*> bracket;
 public:
+	Json()
+	{
+		error=NULL;
+		obj=NULL;
+		text=NULL;
+		maxLen=256;
+		floNum=3;
+	}
 	Json(const char* jsonText)
 	{
 		error=NULL;
@@ -66,7 +74,6 @@ public:
 			return;
 		}
 		text=(char*)malloc(strlen(jsonText)+10);
-		memset(text,0,strlen(jsonText)+10);
 		if(text==NULL)
 		{
 			error="malloc wrong";
@@ -787,8 +794,12 @@ int main()
 	printf("%s\n",temp);
 	Json json(temp);
 	if(json.lastError()!=NULL)
+	{
 		printf("%s\n",json.lastError());
+		return 0;
+	}
 	std::cout<<json.formatPrint(json.getRootObj(),1000)<<std::endl;
+	std::cout<<json["empt"]->arr[1]->floVal<<std::endl;
    // Json::Object* name=json["last"]->objVal;
    // std::cout<<(*name)["ad"]->strVal<<std::endl;
    // if(name==NULL)
