@@ -1,3 +1,5 @@
+#ifndef _JSON_H_
+#define _JSON_H_
 #include <string.h>
 #include <iostream>
 #include <string>
@@ -786,54 +788,4 @@ public:
 		return true;
 	}
 };
-int main()
-{
-	char temp[1000]={0};
-	FileGet file;
-	file.getFileMsg("./a.json",temp,1000);
-	printf("%s\n",temp);
-	Json json(temp);
-	if(json.lastError()!=NULL)
-	{
-		printf("%s\n",json.lastError());
-		return 0;
-	}
-	std::cout<<json.formatPrint(json.getRootObj(),1000)<<std::endl;
-	std::cout<<json["empt"]->arr[1]->floVal<<std::endl;
-   // Json::Object* name=json["last"]->objVal;
-   // std::cout<<(*name)["ad"]->strVal<<std::endl;
-   // if(name==NULL)
-   // 	return 0;
-   // name=name->nextObj;
-   // while(name!=NULL)
-   // {
-   // 	std::cout<<name->key<<":"<<name->strVal<<std::endl;
-   // 	name=name->nextObj;
-   // }
-   // std::cout<<json["first Name"]->strVal<<std::endl;
-   // std::cout<<json["ad"]->strVal<<std::endl;
-   // std::cout<<json["money"]->intVal<<std::endl;
-   // std::cout<<json["haha"]->boolVal<<std::endl;
-   // std::cout<<json["email"]->strVal<<std::endl;
-   // std::cout<<json["try"]->arr.size()<<std::endl;
-   // for(unsigned i=0;i<json["try"]->arr.size();i++)
-   // {
-   // 	std::cout<<json["try"]->arr[i]<<std::endl;
-   // 	auto obj=*json["try"]->arr[i];
-   // 	std::cout<<" "<<obj["ad"]->strVal<<std::endl;
-   // }
-   // char* result=json.createObject(300);
-   // char* tempNow=json.createObject(200);
-   // int arrInt[10]={1,2,3,4,5,6,7,8,9,0};
-   // char* arr=json.createArray(200,Json::INT,10,arrInt);
-   // if(result==NULL)
-   // 	return -1;
-   // json.addKeyVal(tempNow,Json::STRING,"io","kl");
-   // json.addKeyVal(tempNow,Json::ARRAY,"er",arr);
-   // json.addKeyVal(result,Json::FLOAT,"ha",89.1123);
-   // json.addKeyVal(result,Json::STRING,"io","kl");
-   // json.addKeyVal(result,Json::OBJ,"lp",tempNow);
-   // json.addKeyVal(result,Json::BOOL,"45",true);
-   // printf("json:%s\n",result);
-	return 0;
-}
+#endif
