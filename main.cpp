@@ -4,7 +4,9 @@ using namespace std;
 void funtion()
 {
 	char temp[4000]={0};
-	FileGet::getFileMsg("./a.json",temp,2000);
+	printf("please input the json file to read:");
+	scanf("%s",temp);
+	FileGet::getFileMsg(temp,temp,2000);
 	//create tree for json text
 	Json json(temp);
 	if(json.lastError()!=NULL)

@@ -1,1 +1,8 @@
-{"array":[{"Score":5265,"Member":"无敌是多么寂寞"},{"Score":4968,"Member":"大家新年快乐"},{"Score":4963,"Member":"凌晨超级牛"},{"Score":4770,"Member":"猪猪超级美"},{"Score":4425,"Member":"easygame"},{"Score":4314,"Member":"叶佳"},{"Score":3985,"Member":"yqlllll"},{"Score":3797,"Member":"茶冻"},{"Score":3660,"Member":"讨厌高数的葱"},{"Score":3251,"Member":"hanhan含"},{"Score":3105,"Member":"haigenb"},{"Score":2857,"Member":"HB"},{"Score":2805,"Member":"哈哈"},{"Score":2778,"Member":"老司机"},{"Score":2705,"Member":"ju"},{"Score":2645,"Member":"华科第一美女"},{"Score":2538,"Member":"ligen131"},{"Score":2450,"Member":"云景"},{"Score":2405,"Member":"我要飞天！！"},{"Score":2345,"Member":"阿巴阿巴"}],"len":20,"status":"ok"}
+{
+	"post":5200,//set bound port
+	"background":false,//set if run inbackground
+	"default file":"./index.html",//default file when ask /
+	"memory":1,//malloc memory
+	"delete path":[],//remove path
+	"path replace":{}//set agent
+}
