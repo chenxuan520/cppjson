@@ -1,4 +1,5 @@
 {
+	"version":2,//choose the version
 	"post":5200,//set bound port
 	"background":false,//set if run inbackground
 	"default file":"./index.html",//default file when ask /

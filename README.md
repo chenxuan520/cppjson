@@ -18,9 +18,11 @@
 
 2. 源代码大约700行,包括解析,生成和格式化json数据
 
+3. 支持使用//和/**/作为注释
+
 ## 使用方法
 
-#### 生成json对象
+#### 生成json解析对象
 
 ```cpp
     char temp[4000]={0};
@@ -76,9 +78,9 @@
 
 [个人简历](http://chenxuanweb.top/resume.html) 
 
-[gitee](https://gitee.com/chenxuan520/server-for-static-web) 
+[gitee](https://gitee.com/chenxuan520) 
 
-[github](https://github.com/chenxuan520/cppweb)
+[github](https://github.com/chenxuan520)
 
 ---
 
