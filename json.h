@@ -482,7 +482,7 @@ private:
 		free(val);
 		return root;
 	}
-	TypeJson analyseArray(char* begin,char* end,std::vector<Object*>& array)
+	TypeJson analyseArray(char* begin,char* end,std::vector<Object*>& arr)
 	{
 		char* now=begin+1,*next=end,*word=(char*)malloc(sizeof(char)*maxLen);
 		if(word==NULL)
@@ -506,12 +506,12 @@ private:
 				if(nextObj->type==INT)
 				{
 					findNum(now,type,&nextObj->intVal);
-					array.push_back(nextObj);
+					arr.push_back(nextObj);
 				}
 				else
 				{
 					findNum(now,type,&nextObj->floVal);
-					array.push_back(nextObj);
+					arr.push_back(nextObj);
 				}
 				now=strchr(now+1,',');
 				if(now!=NULL)
@@ -528,7 +528,7 @@ private:
 				nextObj->type=STRING;
 				nextObj->isData=true;
 				nextObj->strVal=word;
-				array.push_back(nextObj);
+				arr.push_back(nextObj);
 				now=strchr(now+1,',');
 				if(now==NULL)
 					break;
@@ -543,7 +543,7 @@ private:
 				nextObj->type=BOOL;
 				nextObj->isData=true;
 				nextObj->boolVal=strncmp(now,"true",4)==0;
-				array.push_back(nextObj);
+				arr.push_back(nextObj);
 				now=strchr(now+1,',');
 				if(now==NULL)
 					break;
@@ -558,7 +558,7 @@ private:
 				nextObj=analyseObj(now,next);
 				nextObj->type=OBJ;
 				nextObj->isData=true;
-				array.push_back(nextObj);
+				arr.push_back(nextObj);
 				now=next;
 				now=strchr(now+1,',');
 				if(now==NULL)
@@ -576,7 +576,7 @@ private:
 				nextObj->type=ARRAY;
 				nextObj->arrType=type;
 				nextObj->isData=true;
-				array.push_back(nextObj);
+				arr.push_back(nextObj);
 				now=next;
 				now=strchr(now+1,',');
 				if(now==NULL)

@@ -60,9 +60,9 @@
 
 ## 介绍视频
 
-**[blibili]()**
+**[blibili](https://www.bilibili.com/video/BV1Nq4y1w7zY?from=search&seid=12628536326241937240&spm_id_from=333.337.0.0)**
 
-## bug说明
+## 补充说明
 
 - 不支持json数组类型不相同如[1,"dad",true],因为这种数组的添加复杂而且使用不多,~~懒得支持~~
 
