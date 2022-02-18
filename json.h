@@ -49,6 +49,7 @@ public:
 private:
 	char* text;
 	const char* error;
+	char* word;
 	unsigned maxLen;
 	unsigned floNum;
 	unsigned defaultSize;
@@ -62,18 +63,20 @@ public:
 		error=NULL;
 		obj=NULL;
 		text=NULL;
+		word=NULL;
 		maxLen=256;
 		floNum=3;
 		defaultSize=128;
+		word=(char*)malloc(sizeof(char)*maxLen);
+		if(word==NULL)
+		{
+			error="malloc wrong";
+			return;
+		}
+		memset(word,0,sizeof(char)*maxLen);
 	}
-	Json(const char* jsonText)
+	Json(const char* jsonText):Json()
 	{
-		error=NULL;
-		obj=NULL;
-		text=NULL;
-		maxLen=256;
-		floNum=3;
-		defaultSize=128;
 		if(jsonText==NULL||strlen(jsonText)==0)
 		{
 			error="message error";
@@ -109,6 +112,8 @@ public:
 	~Json()
 	{
 		deleteNode(obj);
+		if(word!=NULL)
+			free(word);
 		if(text!=NULL)
 			free(text);
 		for(auto iter=memory.begin();iter!=memory.end();iter++)
@@ -346,14 +351,13 @@ private:
 		Object * root=new Object,*last=root;
 		root->type=STRUCT;
 		char* now=begin+1,*next=now;
-		char* word=(char*)malloc(sizeof(char)*maxLen),*val=(char*)malloc(sizeof(char)*maxLen),temp=*end;
-		if(word==NULL||val==NULL)
+		char temp=*end;
+		if(word==NULL)
 		{
 			error="malloc wrong";
 			return NULL;
 		}
 		memset(word,0,sizeof(char)*maxLen);
-		memset(val,0,sizeof(char)*maxLen);
 		*end=0;
 		while(now<end)
 		{
@@ -363,6 +367,7 @@ private:
 			nextObj->key=word;
 			hashMap.insert(std::pair<std::string,Object*>{word,nextObj});
 			now+=strlen(word)+3;
+			memset(word,0,sizeof(char)*maxLen);
 			if(*now=='\"')
 			{
 				nextObj->type=STRING;
@@ -374,10 +379,19 @@ private:
 					error="string wrong";
 					return NULL;
 				}
-				for(unsigned i=0;now+i+1<next;i++)
-					val[i]=*(now+i+1);
-				val[strlen(val)]=0;
-				nextObj->strVal=val;
+				if(next-now+3>maxLen)
+				{
+					char* tempStr=(char*)realloc(word,next-now+3);
+					if(tempStr!=NULL)
+					{
+						word=tempStr;
+						maxLen=next-now+3;
+					}
+				}
+				for(unsigned i=0;now+i+1<next&&i<maxLen;i++)
+					word[i]=*(now+i+1);
+				word[strlen(word)]=0;
+				nextObj->strVal=word;
 				now=next+1;
 				if(*now==',')
 					now++;
@@ -452,21 +466,17 @@ private:
 			else
 			{
 				error="text wrong";
-				free(word);
-				free(val);
 				return root;
 			}
 			last->nextObj=nextObj;
 			last=nextObj;
 		}
 		*end=temp;
-		free(word);
-		free(val);
 		return root;
 	}
 	TypeJson analyseArray(char* begin,char* end,std::vector<Object*>& arr)
 	{
-		char* now=begin+1,*next=end,*word=(char*)malloc(sizeof(char)*maxLen);
+		char* now=begin+1,*next=end;
 		if(word==NULL)
 		{
 			error="malloc wrong";
@@ -567,31 +577,35 @@ private:
 			}
 		}
 		else if(*now==']')
-		{
-			free(word);
 			return INT;
-		}
 		else
 		{
 			error="array find wrong";
-			free(word);
 			return INT;
 		}
-		free(word);
 		return nextObj->type;
 	}
-	void findString(const char* begin,char* buffer,unsigned buffLen)
+	void findString(const char* begin,char*& buffer,unsigned& buffLen)
 	{
-		const char* now=begin+1,*next=now;
-		next=strchr(now+1,'\"');
-		while(next!=NULL&&*(next-1)=='\\')
-			next=strchr(next+1,'\"');
-		if(next==NULL)
+		const char* now=begin+1,*nextOne=now;
+		nextOne=strchr(now+1,'\"');
+		while(nextOne!=NULL&&*(nextOne-1)=='\\')
+			nextOne=strchr(nextOne+1,'\"');
+		if(nextOne==NULL)
 		{
 			error="text wrong";
 			return;
 		}
-		for(unsigned i=0;now+i<next&&i<buffLen;i++)
+		if(buffLen<nextOne-now)
+		{
+			char* temp=(char*)realloc(buffer,sizeof(char)*(nextOne-now+10));
+			if(temp!=NULL)
+			{
+				buffer=temp;
+				buffLen=nextOne-now+10;
+			}
+		}
+		for(unsigned i=0;now+i<nextOne&&i<buffLen-1;i++)
 			buffer[i]=*(now+i);
 		buffer[strlen(buffer)]=0;
 	}
