@@ -16,19 +16,24 @@
 
 1. 除了少部分使用STL,大部分都是C制作
 
-2. 源代码大约700行,包括解析,生成和格式化json数据
+2. 源代码大约800行,包括解析,生成和格式化json数据
 
 3. 支持使用//和/**/作为注释
+
+4. 使用非常简便.上手时间短
 
 ## 使用方法
 
 #### 生成json解析对象
 
 ```cpp
-    char temp[4000]={0};
-    FileGet::getFileMsg("./a.json",temp,2000);
-    //create tree for json text
-    Json json(temp);//input const char* to init
+	//create tree for json text
+	Json json(file.getFileBuff(temp));//file.getFileBuff(temp) is const char*
+	if(json.lastError()!=NULL)
+	{
+		printf("%s\n",json.lastError());
+		return ;
+	}
 ```
 
 #### 获取json数据
@@ -46,7 +51,7 @@
 
 ```cpp
     //create a new json text
-    char* getStr=json.createObject(200);
+    char* getStr=json.createObject();
     json.addKeyVal(getStr,Json::STRING,"try","exmaple");
     printf("%s\n",getStr);
 ```
@@ -54,8 +59,8 @@
 #### 格式化json
 
 ```cpp
-    const char* result=json.formatPrint(json.getRootObj(),2000);
-    printf("%s\n",result);
+    const char* result=json.formatPrint(json.getRootObj());
+    printf("%s\n",result);//json.getRootObj is get the root of create
 ```
 
 ## 介绍视频
