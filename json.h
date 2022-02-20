@@ -773,7 +773,7 @@ private:
 		strcat(buffer,"}");
 		return true;
 	}
-	bool printArr(char* buffer,TypeJson type,const std::vector<Object*>& arr)
+	bool printArr(char*& buffer,TypeJson type,const std::vector<Object*>& arr)
 	{
 		unsigned deep=0;
 		char* line=strrchr(buffer,'\n');
