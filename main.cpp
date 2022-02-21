@@ -33,6 +33,8 @@ void funtion()
 	json.addKeyVal(getStr,Json::EMPTY,"empty");
 	printf("%s\n",getStr);
 	free(temp);
+	Json json2={{"null",nullptr},{"int",12},{"flaot",3.45},{"bool",false}};
+	printf("new:%s\n",json2.getResult());
 }
 int main()
 {

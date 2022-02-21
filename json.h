@@ -8,6 +8,7 @@
 #include <vector>
 #include <stack>
 #include <unordered_map>
+#include <initializer_list>
 class Json{
 public:
 	enum TypeJson{
@@ -47,9 +48,107 @@ public:
 		}
 	};
 private:
+	struct InitType{
+		TypeJson type;
+		TypeJson arrType;
+		void* pval=NULL;
+		const char* error=NULL;
+		unsigned arrLen=0;
+		~InitType()
+		{
+			if(pval)
+				free(pval);
+		}
+		InitType(std::initializer_list<InitType> listInit)
+		{
+			type=ARRAY;
+			pval=malloc(sizeof(InitType)*listInit.size());
+			arrLen=listInit.size();
+			if(arrLen==0)
+				return;
+			arrType=listInit.begin()->type;
+			if(pval==NULL)
+			{
+				error="malloc wrong";
+				return;
+			}
+			memset(pval,0,sizeof(InitType)*listInit.size());
+			for(auto iter=listInit.begin();iter!=listInit.end();iter++)
+				*((InitType*)pval+(iter-listInit.begin()))=*iter;
+		}
+		InitType(std::initializer_list<std::pair<std::string,InitType>> listInit)
+		{
+			type=OBJ;
+			pval=malloc(sizeof(std::pair<std::string,InitType>)*listInit.size());
+			arrLen=listInit.size();
+			if(pval==NULL)
+			{
+				error="malloc wrong";
+				return;
+			}
+			memset(pval,0,sizeof(std::pair<std::string,InitType>)*listInit.size());
+			for(auto iter=listInit.begin();iter!=listInit.end();iter++)
+				*((std::pair<std::string,InitType>*)pval+(iter-listInit.begin()))=*iter;
+		}
+		InitType(int val)
+		{
+			type=INT;
+			pval=malloc(sizeof(int));
+			if(pval==NULL)
+				error="malloc wrong";
+			else
+			{
+				memset(pval,0,sizeof(int));
+				*(int*)pval=val;
+			}
+		}
+		InitType(const char* pt)
+		{
+			if(pt==nullptr)
+				type=EMPTY;
+			else
+			{
+				type=STRING;
+				pval=malloc(sizeof(char)*strlen(pt)+10);
+				if(pval==NULL)
+					error="malloc worng";
+				else
+				{
+					memset(pval,0,sizeof(char)*strlen(pt)+10);
+					strcpy((char*)pval,pt);
+				}
+			}
+		}
+		InitType(double val)
+		{
+			type=FLOAT;
+			pval=malloc(sizeof(float));
+			if(pval==NULL)
+				error="malloc wrong";
+			else
+			{
+				memset(pval,0,sizeof(float));
+				*(float*)pval=val;
+			}
+		}
+		InitType(bool val)
+		{
+			type=BOOL;
+			pval=malloc(sizeof(bool));
+			if(pval==NULL)
+				error="malloc wrong";
+			else
+			{
+				memset(pval,0,sizeof(bool));
+				*(bool*)pval=val;
+			}
+		}
+	};
+private:
 	char* text;
 	const char* error;
 	char* word;
+	char* result;
 	unsigned maxLen;
 	unsigned floNum;
 	unsigned defaultSize;
@@ -74,6 +173,52 @@ public:
 			return;
 		}
 		memset(word,0,sizeof(char)*maxLen);
+	}
+	Json(std::initializer_list<std::pair<std::string,InitType>> initList):Json()
+	{
+		result=this->createObject();
+		for(auto iter=initList.begin();iter!=initList.end();iter++)
+		{
+			if(iter->second.pval==NULL&&iter->second.type!=EMPTY)
+			{
+				error="init wrong";
+				return;
+			}
+			if(iter->second.error!=NULL)
+			{
+				error="init wrong";
+				return;
+			}
+			switch(iter->second.type)
+			{
+			case STRING:
+				if(false==addKeyVal(result,STRING,iter->first.c_str(),iter->second.pval))
+					return;
+				break;
+			case INT:
+				if(false==addKeyVal(result,INT,iter->first.c_str(),*(int*)iter->second.pval))
+					return;
+				break;
+			case FLOAT:
+				if(false==addKeyVal(result,FLOAT,iter->first.c_str(),*(float*)iter->second.pval))
+					return;
+				break;
+			case BOOL:
+				if(false==addKeyVal(result,BOOL,iter->first.c_str(),*(bool*)iter->second.pval))
+					return;
+				break;
+			case EMPTY:
+				if(false==addKeyVal(result,EMPTY,iter->first.c_str(),NULL))
+					return;
+				break;
+			default:
+				return;
+			}
+		}
+	}
+	inline const char* getResult()
+	{
+		return result;
 	}
 	Json(const char* jsonText):Json()
 	{
