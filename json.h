@@ -9,6 +9,7 @@
 #include <stack>
 #include <unordered_map>
 #include <initializer_list>
+#include <type_traits>
 class Json{
 public:
 	enum TypeJson{
@@ -22,7 +23,7 @@ public:
 		std::vector<Object*> arr;
 		Object* objVal;
 		Object* nextObj;
-		float floVal;
+		double floVal;
 		int intVal;
 		bool boolVal;
 		bool isData;
@@ -49,57 +50,105 @@ public:
 	};
 private:
 	struct InitType{
-		TypeJson type;
-		TypeJson arrType;
+		TypeJson type=STRING;
 		void* pval=NULL;
 		const char* error=NULL;
-		unsigned arrLen=0;
+		unsigned len=0;
 		~InitType()
 		{
 			if(pval)
-				free(pval);
-		}
-		InitType(std::initializer_list<InitType> listInit)
-		{
-			type=ARRAY;
-			pval=malloc(sizeof(InitType)*listInit.size());
-			arrLen=listInit.size();
-			if(arrLen==0)
-				return;
-			arrType=listInit.begin()->type;
-			if(pval==NULL)
 			{
-				error="malloc wrong";
-				return;
+				free(pval);
+				pval=NULL;
 			}
-			memset(pval,0,sizeof(InitType)*listInit.size());
-			for(auto iter=listInit.begin();iter!=listInit.end();iter++)
-				*((InitType*)pval+(iter-listInit.begin()))=*iter;
+		}
+		InitType(const InitType& old)
+		{
+			this->type=old.type;
+			this->error=old.error;
+			if(old.pval!=NULL)
+			{
+				pval=malloc(sizeof(char)*old.len);
+				if(pval==NULL)
+				{
+					error="malloc worng";
+					type=EMPTY;
+					return;
+				}
+				memcpy(pval,old.pval,old.len);
+			}
 		}
 		InitType(std::initializer_list<std::pair<std::string,InitType>> listInit)
 		{
 			type=OBJ;
-			pval=malloc(sizeof(std::pair<std::string,InitType>)*listInit.size());
-			arrLen=listInit.size();
+			std::string result="";
+			Json json(listInit);
+			result+=json();
+			pval=malloc(sizeof(char)*(result.size()+10));
+			len=sizeof(char)*(result.size()+10);
+			memset(pval,0,sizeof(char)*(result.size()+10));
 			if(pval==NULL)
 			{
 				error="malloc wrong";
+				type=EMPTY;
 				return;
 			}
-			memset(pval,0,sizeof(std::pair<std::string,InitType>)*listInit.size());
-			for(auto iter=listInit.begin();iter!=listInit.end();iter++)
-				*((std::pair<std::string,InitType>*)pval+(iter-listInit.begin()))=*iter;
+			strcpy((char*)pval,result.c_str());
 		}
-		InitType(int val)
+		template<typename T>
+		InitType(std::initializer_list<T> listInit)
 		{
-			type=INT;
-			pval=malloc(sizeof(int));
-			if(pval==NULL)
-				error="malloc wrong";
+			Json json;
+			type=ARRAY;
+			char* now=NULL;
+			T* arr=new T[listInit.size()];
+			int i=0;
+			for(auto iter=listInit.begin();iter!=listInit.end();iter++)
+			{
+				arr[i]=*iter;
+				i++;
+			}
+			int arrlen=listInit.size();
+			if(std::is_same<T,int>::value)
+				now=json.createArray(INT,arrlen,(void*)arr);
+			else if(std::is_same<T,double>::value)
+				now=json.createArray(FLOAT,arrlen,(void*)arr);
+			else if(std::is_same<T,const char*>::value)
+				now=json.createArray(STRING,arrlen,(void*)arr);
+			else if(std::is_same<T,bool>::value)
+				now=json.createArray(BOOL,arrlen,(void*)arr);
 			else
 			{
-				memset(pval,0,sizeof(int));
-				*(int*)pval=val;
+				error="type wrong";
+				type=EMPTY;
+			}
+			pval=malloc(sizeof(char)*strlen(now)+10);
+			len=sizeof(char)*strlen(now)+10;
+			strcpy((char*)pval,now);
+			delete [] arr;
+		}
+		template<typename T>
+		InitType(T val)
+		{
+			if(std::is_same<T,int>::value)
+				type=INT;
+			else if(std::is_same<T,double>::value)
+				type=FLOAT;
+			else if(std::is_same<T,bool>::value)
+				type=BOOL;
+			else
+				type=EMPTY;
+			pval=malloc(sizeof(T));
+			if(pval==NULL)
+			{
+				type=EMPTY;
+				error="malloc wrong";
+			}
+			else
+			{
+				len=sizeof(T);
+				memset(pval,0,sizeof(T));
+				*(T*)pval=val;
 			}
 		}
 		InitType(const char* pt)
@@ -110,37 +159,17 @@ private:
 			{
 				type=STRING;
 				pval=malloc(sizeof(char)*strlen(pt)+10);
+				len=sizeof(sizeof(char)*strlen(pt)+10);
 				if(pval==NULL)
+				{
+					type=EMPTY;
 					error="malloc worng";
+				}
 				else
 				{
 					memset(pval,0,sizeof(char)*strlen(pt)+10);
 					strcpy((char*)pval,pt);
 				}
-			}
-		}
-		InitType(double val)
-		{
-			type=FLOAT;
-			pval=malloc(sizeof(float));
-			if(pval==NULL)
-				error="malloc wrong";
-			else
-			{
-				memset(pval,0,sizeof(float));
-				*(float*)pval=val;
-			}
-		}
-		InitType(bool val)
-		{
-			type=BOOL;
-			pval=malloc(sizeof(bool));
-			if(pval==NULL)
-				error="malloc wrong";
-			else
-			{
-				memset(pval,0,sizeof(bool));
-				*(bool*)pval=val;
 			}
 		}
 	};
@@ -163,6 +192,7 @@ public:
 		obj=NULL;
 		text=NULL;
 		word=NULL;
+		result=NULL;
 		maxLen=256;
 		floNum=3;
 		defaultSize=128;
@@ -200,7 +230,7 @@ public:
 					return;
 				break;
 			case FLOAT:
-				if(false==addKeyVal(result,FLOAT,iter->first.c_str(),*(float*)iter->second.pval))
+				if(false==addKeyVal(result,FLOAT,iter->first.c_str(),*(double*)iter->second.pval))
 					return;
 				break;
 			case BOOL:
@@ -211,14 +241,18 @@ public:
 				if(false==addKeyVal(result,EMPTY,iter->first.c_str(),NULL))
 					return;
 				break;
+			case OBJ:
+				if(false==addKeyVal(result,OBJ,iter->first.c_str(),(char*)iter->second.pval))
+					return;
+				break;
+			case ARRAY:
+				if(false==addKeyVal(result,ARRAY,iter->first.c_str(),(char*)iter->second.pval))
+					return;
+				break;
 			default:
 				return;
 			}
 		}
-	}
-	inline const char* getResult()
-	{
-		return result;
 	}
 	Json(const char* jsonText):Json()
 	{
@@ -258,11 +292,20 @@ public:
 	{
 		deleteNode(obj);
 		if(word!=NULL)
+		{
 			free(word);
+			word=NULL;
+		}
 		if(text!=NULL)
+		{
 			free(text);
+			result=NULL;
+		}
 		for(auto iter=memory.begin();iter!=memory.end();iter++)
-			free(iter->first);
+		{
+			if(iter->first!=NULL)
+				free(iter->first);
+		}
 	}
 	const char* formatPrint(const Object* exmaple)
 	{
@@ -309,7 +352,7 @@ public:
 		sprintf(obj,"%s\"%s\":",obj,key);
 		int valInt=0;
 		char* valStr=NULL;
-		float valFlo=9;
+		double valFlo=9;
 		bool valBool=false;
 		switch(type)
 		{
@@ -323,7 +366,7 @@ public:
 			valFlo=va_arg(args,double);
 			while(memory[obj]-strlen(obj)<15)
 				obj=enlargeMemory(obj);
-			sprintf(obj,"%s%.*f",obj,floNum,valFlo);
+			sprintf(obj,"%s%.*lf",obj,floNum,valFlo);
 			break;
 		case STRING:
 			valStr=va_arg(args,char*);
@@ -402,7 +445,7 @@ public:
 		memset(now,0,sizeof(char)*defaultSize);
 		strcat(now,"[");
 		int* arrInt=(int*)arr;
-		float* arrFlo=(float*)arr;
+		double* arrFlo=(double*)arr;
 		char** arrStr=(char**)arr;
 		bool* arrBool=(bool*)arr;
 		unsigned i=0;
@@ -421,7 +464,7 @@ public:
 			{
 				while(memory[now]-strlen(now)<std::to_string(arrInt[i]).size()+3)
 					now=enlargeMemory(now);
-				sprintf(now,"%s%.*f,",now,floNum,arrFlo[i]);
+				sprintf(now,"%s%.*lf,",now,floNum,arrFlo[i]);
 			}
 			break;
 		case STRING:
@@ -446,7 +489,7 @@ public:
 			{
 				while(memory[now]-strlen(now)<6)
 					now=enlargeMemory(now);
-				if(arrBool)
+				if(arrBool[i])
 					strcat(now,"true,");
 				else
 					strcat(now,"false,");
@@ -462,6 +505,10 @@ public:
 			strcat(now,"]");
 		now[strlen(now)]=0;
 		return now;
+	}
+	char*& operator()()
+	{
+		return result;
 	}
 	inline Object* getRootObj()
 	{
@@ -554,7 +601,7 @@ private:
 				if(nextObj->type==INT)
 					sscanf(now,"%d",&nextObj->intVal);
 				else
-					sscanf(now,"%f",&nextObj->floVal);
+					sscanf(now,"%lf",&nextObj->floVal);
 				now=next+1;
 			}
 			else if(*now=='[')
@@ -763,7 +810,7 @@ private:
 		}
 		else
 		{
-			if(sscanf(begin,"%f",(float*)pnum)<1)
+			if(sscanf(begin,"%lf",(double*)pnum)<1)
 				error="num wrong";
 		}
 	}
@@ -880,7 +927,7 @@ private:
 				sprintf(buffer,"%s\"%s\":%d,",buffer,now->key.c_str(),now->intVal);
 				break;
 			case FLOAT:
-				sprintf(buffer,"%s\"%s\":%.*f,",buffer,now->key.c_str(),floNum,now->floVal);
+				sprintf(buffer,"%s\"%s\":%.*lf,",buffer,now->key.c_str(),floNum,now->floVal);
 				break;
 			case STRING:
 				sprintf(buffer,"%s\"%s\":\"%s\",",buffer,now->key.c_str(),now->strVal.c_str());
@@ -939,7 +986,7 @@ private:
 				sprintf(buffer,"%s%d,",buffer,arr[i]->intVal);
 				break;
 			case FLOAT:
-				sprintf(buffer,"%s%.*f,",buffer,floNum,arr[i]->floVal);
+				sprintf(buffer,"%s%.*lf,",buffer,floNum,arr[i]->floVal);
 				break;
 			case STRING:
 				sprintf(buffer,"%s\"%s\",",buffer,arr[i]->strVal.c_str());

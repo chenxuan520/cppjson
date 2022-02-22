@@ -33,8 +33,21 @@ void funtion()
 	json.addKeyVal(getStr,Json::EMPTY,"empty");
 	printf("%s\n",getStr);
 	free(temp);
-	Json json2={{"null",nullptr},{"int",12},{"flaot",3.45},{"bool",false}};
-	printf("new:%s\n",json2.getResult());
+	//create json in begin
+	Json json2={
+		{"float",12.3},
+		{"int",23},
+		{"bool",true},
+		{"str","string"},
+		{"null",nullptr},
+		{"arrFloat",{2.3,8.9,2.3}},
+		{"arrBool",{true,false}},
+		{"arrStr",{"chenxuan","create"}}
+	};
+	printf("new create:\n%s\n",json2());
+	//after begin you can continue add ketValue
+	json2.addKeyVal(json2(),Json::STRING,"temp","chenxuan");
+	printf("new create:\n%s\n",json2());
 }
 int main()
 {
