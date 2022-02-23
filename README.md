@@ -22,7 +22,7 @@
 
 4. 使用非常简便.上手时间短
 
-5. 可以通过{}直接像go一样获得json,非常方便
+5. 可以通过{}直接像go一样生成json,非常方便
 
 ## 使用方法
 
@@ -58,27 +58,35 @@
     char* getStr=json.createObject();
     json.addKeyVal(getStr,Json::STRING,"try","exmaple");
     printf("%s\n",getStr);
+    // an others way to add
+	json.addKeyVal(getStr,"new","string");
+	json.addKeyVal(getStr,"file name",(const char*)temp);
+	json.addKeyVal(getStr,"newarr",arr);
 ```
+
+> 第二种方法添加时候字符串需要转为const char*
+> 
+> 推荐使用第二种方法添加
 
 ##### 初始化添加
 
 ```cpp
-	//create json in begin
-	Json json2={
-		{"float",12.3},
-		{"int",23},
-		{"bool",true},
-		{"str","string"},
-		{"null",nullptr},
-		{"arrFloat",{2.3,8.9,2.3}},
-		{"arrBool",{true,false}},
-		{"arrStr",{"chenxuan","create"}}
-	};
-	printf("new create:\n%s\n",json2());
-	//after begin you can continue add ketValue
-	json2.addKeyVal(json2(),Json::STRING,"temp","chenxuan");
-	printf("new create:\n%s\n",json2());
-
+    //create json in begin
+    Json json2={
+        {"float",12.3},
+        {"int",23},
+        {"bool",true},
+        {"str","string"},
+        {"null",nullptr},
+        {"arrFloat",{2.3,8.9,2.3}},
+        {"arrBool",{true,false}},
+        {"arrStr",{"chenxuan","create"}}
+    };
+    printf("new create:\n%s\n",json2());
+    //after begin you can continue add ketValue
+    json2.addKeyVal(json2(),Json::STRING,"temp","chenxuan");
+    json2("new arr")=arr;
+    printf("new create:\n%s\n",json2());
 ```
 
 > 第二种方法添加之后通过()获取结果

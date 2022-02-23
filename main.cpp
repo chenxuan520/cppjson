@@ -31,8 +31,12 @@ void funtion()
 	int arrInt[5]={1,2,3,4,5};
 	char* arr=json.createArray(Json::INT,5,arrInt);
 	json.addKeyVal(getStr,Json::ARRAY,"arr",arr);
-	json.addKeyVal(getStr,Json::EMPTY,"empty");
+	json.addKeyVal(getStr,Json::EMPTY,"empty",NULL);
+	// an others way to add
+	json.addKeyVal(getStr,"new","string");
+	json.addKeyVal(getStr,"file name",(const char*)temp);
 	json.addKeyVal(getStr,"newarr",arr);
+	json.addKeyVal(getStr,"newnum",12);
 	printf("%s\n",getStr);
 	free(temp);
 	//create json in begin

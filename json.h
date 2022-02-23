@@ -304,10 +304,8 @@ public:
 			result=NULL;
 		}
 		for(auto iter=memory.begin();iter!=memory.end();iter++)
-		{
 			if(iter->first!=NULL)
 				free(iter->first);
-		}
 	}
 	const char* formatPrint(const Object* exmaple)
 	{
@@ -321,12 +319,6 @@ public:
 		memory.insert(std::pair<char*,unsigned>{buffer,sizeof(char)*defaultSize*10});
 		printObj(buffer,exmaple);
 		return buffer;
-	}
-	Object* operator[](const char* key)
-	{
-		if(hashMap.find(std::string(key))==hashMap.end())
-			return NULL;
-		return hashMap.find(std::string(key))->second;
 	}
 	template<typename T>
 	bool addKeyVal(char*& obj,const char* key,T value)
@@ -349,6 +341,11 @@ public:
 		if(obj==NULL)
 		{
 			error="null buffer";
+			return false;
+		}
+		if(key==NULL)
+		{
+			error="key null";
 			return false;
 		}
 		va_list args;
@@ -523,6 +520,12 @@ public:
 			strcat(now,"]");
 		now[strlen(now)]=0;
 		return now;
+	}
+	Object* operator[](const char* key)
+	{
+		if(hashMap.find(std::string(key))==hashMap.end())
+			return NULL;
+		return hashMap.find(std::string(key))->second;
 	}
 	char*& operator()()
 	{
