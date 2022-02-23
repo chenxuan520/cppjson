@@ -176,6 +176,7 @@ private:
 private:
 	char* text;
 	const char* error;
+	const char* nowKey;
 	char* word;
 	char* result;
 	unsigned maxLen;
@@ -193,11 +194,13 @@ public:
 		text=NULL;
 		word=NULL;
 		result=NULL;
+		nowKey=NULL;
 		maxLen=256;
 		floNum=3;
 		defaultSize=128;
+		result=this->createObject();
 		word=(char*)malloc(sizeof(char)*maxLen);
-		if(word==NULL)
+		if(word==NULL||result==NULL)
 		{
 			error="malloc wrong";
 			return;
@@ -206,7 +209,6 @@ public:
 	}
 	Json(std::initializer_list<std::pair<std::string,InitType>> initList):Json()
 	{
-		result=this->createObject();
 		for(auto iter=initList.begin();iter!=initList.end();iter++)
 		{
 			if(iter->second.pval==NULL&&iter->second.type!=EMPTY)
@@ -325,6 +327,22 @@ public:
 		if(hashMap.find(std::string(key))==hashMap.end())
 			return NULL;
 		return hashMap.find(std::string(key))->second;
+	}
+	template<typename T>
+	bool addKeyVal(char*& obj,const char* key,T value)
+	{
+		if(std::is_same<T,int>::value)
+			return addKeyVal(obj,INT,key,value);
+		else if(std::is_same<T,double>::value)
+			return addKeyVal(obj,FLOAT,key,value);
+		else if(std::is_same<T,char*>::value)
+			return addKeyVal(obj,OBJ,key,value);
+		else if(std::is_same<T,const char*>::value)
+			return addKeyVal(obj,STRING,key,value);
+		else if(std::is_same<T,bool>::value)
+			return addKeyVal(obj,BOOL,key,value);
+		else 
+			return addKeyVal(obj,EMPTY,key,NULL);
 	}
 	bool addKeyVal(char*& obj,TypeJson type,const char* key,...)
 	{
@@ -509,6 +527,17 @@ public:
 	char*& operator()()
 	{
 		return result;
+	}
+	Json& operator()(const char* key)
+	{
+		nowKey=key;
+		return *this;
+	}
+	template<typename T>
+	Json& operator=(T value)
+	{
+		this->addKeyVal(this->result,nowKey,value);
+		return *this;
 	}
 	inline Object* getRootObj()
 	{

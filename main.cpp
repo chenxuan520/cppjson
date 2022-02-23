@@ -26,11 +26,13 @@ void funtion()
 	//create a new json text
 	char* getStr=json.createObject();
 	json.addKeyVal(getStr,Json::STRING,"try","exmaple");
+	json.addKeyVal(getStr,"null",nullptr);
 	//create an array to json
 	int arrInt[5]={1,2,3,4,5};
 	char* arr=json.createArray(Json::INT,5,arrInt);
 	json.addKeyVal(getStr,Json::ARRAY,"arr",arr);
 	json.addKeyVal(getStr,Json::EMPTY,"empty");
+	json.addKeyVal(getStr,"newarr",arr);
 	printf("%s\n",getStr);
 	free(temp);
 	//create json in begin
@@ -47,6 +49,7 @@ void funtion()
 	printf("new create:\n%s\n",json2());
 	//after begin you can continue add ketValue
 	json2.addKeyVal(json2(),Json::STRING,"temp","chenxuan");
+	json2("new arr")=arr;
 	printf("new create:\n%s\n",json2());
 }
 int main()
