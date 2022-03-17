@@ -12,7 +12,7 @@
 #include <type_traits>
 class Json{
 public:
-	enum TypeJson{
+	enum TypeJson{//object type
 		INT=0,FLOAT=1,ARRAY=2,OBJ=3,STRING=4,BOOL=5,STRUCT=6,EMPTY=7
 	};
 	struct Object{
@@ -49,7 +49,7 @@ public:
 		}
 	};
 private:
-	struct InitType{
+	struct InitType{//struct for ctreate such as {{"as","ds"}} in init;
 		TypeJson type=STRING;
 		void* pval=NULL;
 		const char* error=NULL;
@@ -184,7 +184,7 @@ private:
 	unsigned defaultSize;
 	Object* obj;
 	std::unordered_map<char*,unsigned> memory;
-	std::unordered_map<std::string,Object*> hashMap;
+	/* std::unordered_map<std::string,Object*> hashMap; */
 	std::unordered_map<char*,char*> bracket;
 public:
 	Json()
@@ -523,9 +523,10 @@ public:
 	}
 	Object* operator[](const char* key)
 	{
-		if(hashMap.find(std::string(key))==hashMap.end())
-			return NULL;
-		return hashMap.find(std::string(key))->second;
+		return (*obj)[key];
+		/* if(hashMap.find(std::string(key))==hashMap.end()) */
+		/* 	return NULL; */
+		/* return hashMap.find(std::string(key))->second; */
 	}
 	char*& operator()()
 	{
@@ -589,7 +590,7 @@ private:
 			memset(word,0,sizeof(char)*maxLen);
 			findString(now,word,maxLen);
 			nextObj->key=word;
-			hashMap.insert(std::pair<std::string,Object*>{word,nextObj});
+			/* hashMap.insert(std::pair<std::string,Object*>{word,nextObj}); */
 			now+=strlen(word)+3;
 			memset(word,0,sizeof(char)*maxLen);
 			if(*now=='\"')
@@ -884,15 +885,15 @@ private:
 	}
 	void deleteSpace()
 	{
-	    unsigned j=0,k=0;
-	    unsigned flag=0;
-	    for(j=0,k=0; text[j]!='\0'; j++)
-	    {
-	    	if(text[j]!='\r'&&text[j]!='\n'&&text[j]!='\t'&&(text[j]!=' '||flag%2!=0))
-	    		text[k++]=text[j];
-	    	if(text[j]=='\"'&&j>0&&text[j-1]!='\\')
-	    		flag++;
-	    }
+		unsigned j=0,k=0;
+		unsigned flag=0;
+		for(j=0,k=0; text[j]!='\0'; j++)
+		{
+			if(text[j]!='\r'&&text[j]!='\n'&&text[j]!='\t'&&(text[j]!=' '||flag%2!=0))
+				text[k++]=text[j];
+			if(text[j]=='\"'&&j>0&&text[j-1]!='\\')
+				flag++;
+		}
 		text[k]=0;
 	}
 	void deleteNode(Object* root)
