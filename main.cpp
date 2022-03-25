@@ -50,11 +50,18 @@ void funtion()
 		{"arrBool",{true,false}},
 		{"arrStr",{"chenxuan","create"}}
 	};
+	vector<string> arrv={"op","io"};
+	char* arrt=json2.createArray(arrv);
+	string strjson;
+	json2.addKeyVal(strjson,"key","value");
+	printf("%s \n\n",arrt);
 	printf("new create:\n%s\n",json2());
 	//after begin you can continue add ketValue
 	json2.addKeyVal(json2(),Json::STRING,"temp","chenxuan");
+	json2.addKeyVal(json2(),"arrv",arrt);
 	json2("new arr")=arr;
 	printf("new create:\n%s\n",json2());
+	cout<<strjson<<endl;
 }
 int main()
 {
