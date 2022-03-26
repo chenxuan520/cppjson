@@ -37,6 +37,15 @@ void funtion()
 	json.addKeyVal(getStr,"file name",(const char*)temp);
 	json.addKeyVal(getStr,"newarr",arr);
 	json.addKeyVal(getStr,"newnum",12);
+	//add obj arr
+	auto str1=json.createObject();
+	json.addKeyVal(str1,"koko","hshsh");
+	auto str2=json.createObject();
+	json.addKeyVal(str2,"koko","hshsh");
+	vector<char*> newObj={str1,str2};
+	char str3[30]="hahaha";
+	json.addKeyVal(getStr,"oldstr",str3);
+	json.addKeyVal(getStr,"arrVct",json.createArray(newObj));
 	printf("%s\n",getStr);
 	free(temp);
 	//create json in begin
@@ -52,16 +61,14 @@ void funtion()
 	};
 	vector<string> arrv={"op","io"};
 	char* arrt=json2.createArray(arrv);
-	string strjson;
-	json2.addKeyVal(strjson,"key","value");
-	printf("%s \n\n",arrt);
 	printf("new create:\n%s\n",json2());
 	//after begin you can continue add ketValue
 	json2.addKeyVal(json2(),Json::STRING,"temp","chenxuan");
 	json2.addKeyVal(json2(),"arrv",arrt);
-	json2("new arr")=arr;
+	char* arr1=json2.createArray(Json::INT,5,arrInt);
+	json2("new arr")=arrv;
+	json2("arr1")=arr1;
 	printf("new create:\n%s\n",json2());
-	cout<<strjson<<endl;
 }
 int main()
 {
