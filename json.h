@@ -525,7 +525,7 @@ public:
 		case STRUCT:
 			for(i=0;i<arrLen;i++)
 			{
-				while(memory[now]-strlen(now)<strlen(arrStr[i])+5)
+				while(memory[now]-strlen(now)<pvect[i].size()+5)
 					now=enlargeMemory(now);
 				sprintf(now,"%s\"%s\",",now,pvect[i].c_str());
 			}
