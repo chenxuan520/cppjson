@@ -182,9 +182,9 @@ private:
 	unsigned maxLen;
 	unsigned floNum;
 	unsigned defaultSize;
+	bool isCheck;
 	Object* obj;
 	std::unordered_map<char*,unsigned> memory;
-	/* std::unordered_map<std::string,Object*> hashMap; */
 	std::unordered_map<char*,char*> bracket;
 public:
 	Json()
@@ -195,6 +195,7 @@ public:
 		word=NULL;
 		result=NULL;
 		nowKey=NULL;
+		isCheck=true;
 		maxLen=256;
 		floNum=3;
 		defaultSize=128;
@@ -209,6 +210,7 @@ public:
 	}
 	Json(std::initializer_list<std::pair<std::string,InitType>> initList):Json()
 	{
+		isCheck=false;
 		for(auto iter=initList.begin();iter!=initList.end();iter++)
 		{
 			if(iter->second.pval==NULL&&iter->second.type!=EMPTY)
@@ -255,6 +257,7 @@ public:
 				return;
 			}
 		}
+		isCheck=true;
 	}
 	Json(const char* jsonText):Json()
 	{
@@ -307,6 +310,45 @@ public:
 			if(iter->first!=NULL)
 				free(iter->first);
 	}
+	bool analyseText(const char* jsonText)
+	{
+		if(jsonText==NULL||strlen(jsonText)==0)
+		{
+			error="message error";
+			return false;
+		}
+		if(text!=NULL)
+			free(text);
+		text=(char*)malloc(strlen(jsonText)+10);
+		if(text==NULL)
+		{
+			error="malloc wrong";
+			return false;
+		}
+		memset(text,0,strlen(jsonText)+10);
+		strcpy(text,jsonText);
+		deleteComment();
+		deleteSpace();
+		if(false==pairBracket())
+		{
+			error="pair bracket wrong";
+			return false;
+		}
+		if(text[0]!='{')
+		{
+			error="text wrong";
+			return false;
+		}
+		if(obj!=NULL)
+			deleteNode(obj);
+		obj=analyseObj(text,bracket[text]);
+		if(obj==NULL)
+		{
+			error="malloc wrong";
+			return false;
+		}
+		return true;
+	}
 	const char* formatPrint(const Object* exmaple)
 	{
 		char* buffer=(char*)malloc(sizeof(char)*defaultSize*10);
@@ -329,7 +371,7 @@ public:
 			return addKeyVal(obj,FLOAT,key,value);
 		else if(std::is_same<T,char*>::value)
 			return addKeyVal(obj,OBJ,key,value);
-		else if(std::is_same<T,const char*>::value)
+		else if(std::is_same<T,const char*>::value||std::is_same<T,std::string>::value)
 			return addKeyVal(obj,STRING,key,value);
 		else if(std::is_same<T,bool>::value)
 			return addKeyVal(obj,BOOL,key,value);
@@ -418,7 +460,15 @@ public:
 				error="null input";
 				return false;
 			}
-			sprintf(obj,"%s%s",obj,valStr);
+			if(isCheck)
+			{
+				if(memory.find(valStr)!=memory.end())
+					sprintf(obj,"%s%s",obj,valStr);
+				else
+					sprintf(obj,"%s\"%s\"",obj,valStr);
+			}
+			else
+				sprintf(obj,"%s%s",obj,valStr);
 			break;
 		default:
 			error="can not insert this type";
@@ -442,6 +492,26 @@ public:
 		strcpy(now,"{}");
 		return now;
 	}
+	template<typename T>
+	char* createArray(std::vector<T>& arr)
+	{
+		char* result=NULL;
+		if(std::is_same<T,int>::value)
+			result=createArray(INT,arr.size(),&arr[0]);
+		else if(std::is_same<T,double>::value)
+			result=createArray(FLOAT,arr.size(),&arr[0]);
+		else if(std::is_same<T,std::string>::value)
+			result=createArray(STRUCT,arr.size(),&arr);
+		else if(std::is_same<T,char*>::value)
+			result=createArray(OBJ,arr.size(),&arr[0]);
+		else if(std::is_same<T,const char*>::value)
+			result=createArray(STRING,arr.size(),&arr[0]);
+		else if(std::is_same<T,bool>::value)
+			result=createArray(BOOL,arr.size(),&arr[0]);
+		else
+			error="wrong vector type";
+		return result;
+	}
 	char* createArray(TypeJson type,unsigned arrLen,void* arr)
 	{
 		if(arr==NULL)
@@ -463,6 +533,7 @@ public:
 		double* arrFlo=(double*)arr;
 		char** arrStr=(char**)arr;
 		bool* arrBool=(bool*)arr;
+		auto& pvect=*(std::vector<std::string>*)arr;
 		unsigned i=0;
 		switch(type)
 		{
@@ -490,13 +561,29 @@ public:
 				sprintf(now,"%s\"%s\",",now,arrStr[i]);
 			}
 			break;
+		case STRUCT:
+			for(i=0;i<arrLen;i++)
+			{
+				while(memory[now]-strlen(now)<pvect[i].size()+5)
+					now=enlargeMemory(now);
+				sprintf(now,"%s\"%s\",",now,pvect[i].c_str());
+			}
+			break;
 		case OBJ:
 		case ARRAY:
 			for(i=0;i<arrLen;i++)
 			{
 				while(memory[now]-strlen(now)<strlen(arrStr[i])+4)
 					now=enlargeMemory(now);
-				sprintf(now,"%s%s,",now,arrStr[i]);
+				if(isCheck)
+				{
+					if(memory.find(arrStr[i])!=memory.end())
+						sprintf(now,"%s%s,",now,arrStr[i]);
+					else
+						sprintf(now,"%s\"%s\",",now,arrStr[i]);
+				}
+				else
+					sprintf(now,"%s%s,",now,arrStr[i]);
 			}
 			break;
 		case BOOL:
@@ -521,12 +608,9 @@ public:
 		now[strlen(now)]=0;
 		return now;
 	}
-	Object* operator[](const char* key)
+	inline Object* operator[](const char* key)
 	{
 		return (*obj)[key];
-		/* if(hashMap.find(std::string(key))==hashMap.end()) */
-		/* 	return NULL; */
-		/* return hashMap.find(std::string(key))->second; */
 	}
 	char*& operator()()
 	{
@@ -541,6 +625,13 @@ public:
 	Json& operator=(T value)
 	{
 		this->addKeyVal(this->result,nowKey,value);
+		return *this;
+	}
+	template<typename T>
+	Json& operator=(std::vector<T> value)
+	{
+		char* arr=this->createArray(value);
+		this->addKeyVal(this->result,nowKey,arr);
 		return *this;
 	}
 	inline Object* getRootObj()
