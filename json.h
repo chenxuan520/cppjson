@@ -310,6 +310,45 @@ public:
 			if(iter->first!=NULL)
 				free(iter->first);
 	}
+	bool analyseText(const char* jsonText)
+	{
+		if(jsonText==NULL||strlen(jsonText)==0)
+		{
+			error="message error";
+			return false;
+		}
+		if(text!=NULL)
+			free(text);
+		text=(char*)malloc(strlen(jsonText)+10);
+		if(text==NULL)
+		{
+			error="malloc wrong";
+			return false;
+		}
+		memset(text,0,strlen(jsonText)+10);
+		strcpy(text,jsonText);
+		deleteComment();
+		deleteSpace();
+		if(false==pairBracket())
+		{
+			error="pair bracket wrong";
+			return false;
+		}
+		if(text[0]!='{')
+		{
+			error="text wrong";
+			return false;
+		}
+		if(obj!=NULL)
+			deleteNode(obj);
+		obj=analyseObj(text,bracket[text]);
+		if(obj==NULL)
+		{
+			error="malloc wrong";
+			return false;
+		}
+		return true;
+	}
 	const char* formatPrint(const Object* exmaple)
 	{
 		char* buffer=(char*)malloc(sizeof(char)*defaultSize*10);
