@@ -372,12 +372,20 @@ public:
 			return addKeyVal(obj,FLOAT,key,value);
 		else if(std::is_same<T,char*>::value)
 			return addKeyVal(obj,OBJ,key,value);
-		else if(std::is_same<T,const char*>::value||std::is_same<T,std::string>::value)
+		else if(std::is_same<T,const char*>::value)
 			return addKeyVal(obj,STRING,key,value);
+		else if(std::is_same<T,std::string>::value)
+			return addKeyVal(obj,STRUCT,key,&value);
 		else if(std::is_same<T,bool>::value)
 			return addKeyVal(obj,BOOL,key,value);
 		else 
 			return addKeyVal(obj,EMPTY,key,NULL);
+	}
+	template<typename T>
+	bool addKeyVal(char*& obj,const char* key,std::vector<T> value)
+	{
+		char* arr=this->createArray(value);
+		return this->addKeyVal(obj,key,arr);
 	}
 	bool addKeyVal(char*& obj,TypeJson type,const char* key,...)
 	{
@@ -412,6 +420,7 @@ public:
 		char* valStr=NULL;
 		double valFlo=9;
 		bool valBool=false;
+		std::string* stdStr=NULL;
 		switch(type)
 		{
 		case INT:
@@ -450,6 +459,17 @@ public:
 				strcat(obj,"true");
 			else
 				strcat(obj,"false");
+			break;
+		case STRUCT:
+			stdStr=(std::string*)va_arg(args,char*);
+			while(memory[obj]-(int)strlen(obj)<(int)stdStr->size()+32)
+				obj=enlargeMemory(obj);
+			if(stdStr==NULL)
+			{
+				error="null input";
+				return false;
+			}
+			sprintf(obj,"%s\"%s\"",obj,stdStr->c_str());
 			break;
 		case OBJ:
 		case ARRAY:
