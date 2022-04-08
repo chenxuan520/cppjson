@@ -173,6 +173,313 @@ private:
 			}
 		}
 	};
+public:
+	class Node{
+	private:
+		std::string result;
+		std::string key;
+		const char* error;
+		unsigned floNum;
+		bool isArray;
+	public:
+		explicit Node(bool isArr=false)
+		{
+			if(!isArr)
+				result="{}";
+			else
+				result="[]";
+			isArray=isArr;
+			floNum=3;
+			isArray=false;
+		}
+		template<typename T>
+		explicit Node(const std::vector<T>& data):Node()
+		{
+			isArray=true;
+			result="[]";
+			addArray(data);
+		}
+		template<typename T>
+		explicit Node(const T* data,unsigned len):Node()
+		{
+			std::vector<T> arr(len);
+			for(unsigned i=0;i<len;i++)
+				arr[i]=data[i];
+			isArray=true;
+			result="[]";
+			addArray((const std::vector<T>&)arr);
+		}
+		Node(std::initializer_list<std::pair<std::string,InitType>> initList):Node()
+		{
+			for(auto iter=initList.begin();iter!=initList.end();iter++)
+			{
+				if(iter->second.pval==NULL&&iter->second.type!=EMPTY)
+				{
+					error="init wrong";
+					return;
+				}
+				if(iter->second.error!=NULL)
+				{
+					error="init wrong";
+					return;
+				}
+				switch(iter->second.type)
+				{
+				case STRING:
+					if(false==addKeyValue(STRING,iter->first.c_str(),iter->second.pval))
+						return;
+					break;
+				case INT:
+					if(false==addKeyValue(INT,iter->first.c_str(),*(int*)iter->second.pval))
+						return;
+					break;
+				case FLOAT:
+					if(false==addKeyValue(FLOAT,iter->first.c_str(),*(double*)iter->second.pval))
+						return;
+					break;
+				case BOOL:
+					if(false==addKeyValue(BOOL,iter->first.c_str(),*(bool*)iter->second.pval))
+						return;
+					break;
+				case EMPTY:
+					if(false==addKeyValue(EMPTY,iter->first.c_str(),NULL))
+						return;
+					break;
+				case OBJ:
+					if(false==addKeyValue(OBJ,iter->first.c_str(),(char*)iter->second.pval))
+						return;
+					break;
+				case ARRAY:
+					if(false==addKeyValue(ARRAY,iter->first.c_str(),(char*)iter->second.pval))
+						return;
+					break;
+				default:
+					return;
+				}
+			}
+		}
+		inline const char* operator()()
+		{
+			return result.c_str();
+		}
+		Node& operator()(const char* key)
+		{
+			this->key=key;
+			return *this;
+		}
+		template<typename T>
+		Node& operator=(T& data)
+		{
+			addKeyValue(key.c_str(),data);
+			return *this;
+		}
+	private:
+		template<typename T>
+		bool addArray(const std::vector<T>& arr)
+		{
+			if(arr.size()==0)
+				return false;
+			if(std::is_same<T,int>::value)
+				return addArray(INT,&arr[0],arr.size());
+			else if(std::is_same<T,double>::value)
+				return addArray(FLOAT,&arr[0],arr.size());
+			else if(std::is_same<T,char*>::value||std::is_same<T,const char*>::value)
+				return addArray(STRING,&arr[0],arr.size());
+			else if(std::is_same<T,std::string>::value)
+				return addArray(STRUCT,&arr[0],arr.size());
+			else if(std::is_same<T,Node>::value)
+				return addArray(OBJ,&arr[0],arr.size());
+			else
+				return addArray(EMPTY,NULL,arr.size());
+			return true;
+		}
+		bool addArray(const std::vector<bool>& arr)
+		{
+			if(arr.size()==0)
+				return true;
+			bool* temp=(bool*)malloc(sizeof(bool)*arr.size());
+			if(temp==NULL)
+			{
+				error="malloc wrong";
+				return false;
+			}
+			for(unsigned i=0;i<arr.size();i++)
+				temp[i]=arr[i];
+			addArray(BOOL,temp,arr.size());
+			free(temp);
+			return true;
+		}
+		bool addArray(TypeJson type,const void* arr,unsigned len)
+		{
+			if(arr==NULL||!isArray||len==0)
+				return true;
+			char word[128]={0};
+			int* arrInt=(int*)arr;
+			double* arrFlo=(double*)arr;
+			bool* arrBool=(bool*)arr;
+			Node* arrNode=(Node*)arr;
+			char** arrStr=(char**)arr;
+			std::string* arrStd=(std::string*)arr;
+			if(*(result.end()-1)==']')
+			{
+				if(result.size()>2)
+					*(result.end()-1)=',';
+				else
+					result.erase(result.end()-1);
+			}
+			switch(type)
+			{
+			case INT:
+				for(unsigned i=0;i<len;i++)
+					result+=std::to_string(arrInt[i])+",";
+				break;
+			case FLOAT:
+				for(unsigned i=0;i<len;i++)
+				{
+					memset(word,0,sizeof(char)*128);
+					sprintf(word,"%.*lf,",floNum,arrFlo[i]);
+					result+=word;
+				}
+				break;
+			case STRING:
+				for(unsigned i=0;i<len;i++)
+				{
+					result+=arrStr[i];
+					result+=',';
+				}
+				break;
+			case STRUCT:
+				for(unsigned i=0;i<len;i++)
+					result+='\"'+arrStd[i]+'\"'+',';
+				break;
+			case BOOL:
+				for(unsigned i=0;i<len;i++)
+				{
+					if(arrBool[i])
+						result+="true";
+					else
+						result+="false";
+					result+=',';
+				}
+				break;
+			case EMPTY:
+				for(unsigned i=0;i<len;i++)
+				{
+					result+="null";
+					result+=',';
+				}
+				break;
+			case ARRAY:
+			case OBJ:
+				for(unsigned i=0;i<len;i++)
+				{
+					result+=arrNode[i]();
+					result+=',';
+				}
+				break;
+			}
+			*(result.end()-1)=']';
+			return true;
+		}
+		bool addKeyValue(TypeJson type,const char* key,...)
+		{
+			if(key==NULL)
+			{
+				error="key null";
+				return false;
+			}
+			va_list args;
+			va_start(args,key);
+			if(*(result.end()-1)=='}')
+			{
+				result.erase(result.end()-1);
+				if(result.size()>1)
+					result+=',';
+			}
+			result+='\"';
+			result+=key;
+			result+="\":";
+			char word[128]={0};
+			int valInt=0;
+			char* valStr=NULL;
+			double valFlo=9;
+			bool valBool=false;
+			Node* valNode=NULL;
+			switch(type)
+			{
+			case INT:
+				valInt=va_arg(args,int);
+				result+=std::to_string(valInt);
+				break;
+			case FLOAT:
+				valFlo=va_arg(args,double);
+				memset(word,0,sizeof(char)*128);
+				sprintf(word,"%.*lf",floNum,valFlo);
+				result+=word;
+				break;
+			case STRING:
+				valStr=va_arg(args,char*);
+				if(valStr==NULL)
+				{
+					error="null input";
+					return false;
+				}
+				result+='\"';
+				result+=valStr;
+				result+='\"';
+				break;
+			case EMPTY:
+				result+="null";
+				break;
+			case BOOL:
+				valBool=va_arg(args,int);
+				if(valBool==true)
+					result+="true";
+				else
+					result+="false";
+				break;
+			case OBJ:
+			case ARRAY:
+				valStr=va_arg(args,char*);
+				valNode=(Node*)valStr;
+				if(valStr==NULL)
+				{
+					error="null input";
+					return false;
+				}
+				result+=(*valNode)();
+				break;
+			default:
+				error="can not insert this type";
+				result+='}';
+				return false;
+			}
+			result+='}';
+			return true;
+		}
+		template<typename T>
+		bool addKeyValue(const char* key,T data)
+		{
+			if(std::is_same<T,int>::value)
+				return addKeyValue(INT,key,data);
+			else if(std::is_same<T,double>::value)
+				return addKeyValue(FLOAT,key,data);
+			else if(std::is_same<T,bool>::value)
+				return addKeyValue(BOOL,key,data);
+			else if(std::is_same<T,Node>::value)
+				return addKeyValue(OBJ,key,&data);
+			else if(std::is_same<T,const char*>::value||std::is_same<T,char*>::value)
+				return addKeyValue(STRING,key,data);
+			else
+				return addKeyValue(EMPTY,key,data);
+		}
+		template<typename T>
+		bool addKeyValue(const char* key,const std::vector<T>& data)
+		{
+			Node node(data);
+			return addKeyValue(key,node);
+		}
+	};
 private:
 	char* text;
 	const char* error;

@@ -69,6 +69,14 @@ void funtion()
 	json2("new arr")=arrv;
 	json2("arr1")=arr1;
 	printf("new create:\n%s\n",json2());
+	Json::Node node,node1={{"ko","ads"}};
+	vector<Json::Node> arrNode;
+	for(unsigned i=0;i<5;i++)
+		arrNode.push_back(node1);
+	node("ko")="lplp";
+	node("arr")=arrv;
+	node("arrInt")=arrNode;
+	printf("\n\n%s\n%s",node(),node1());
 }
 int main()
 {
