@@ -98,9 +98,7 @@ private:
 		template<typename T>
 		InitType(std::initializer_list<T> listInit)
 		{
-			Json json;
 			type=ARRAY;
-			char* now=NULL;
 			T* arr=new T[listInit.size()];
 			int i=0;
 			for(auto iter=listInit.begin();iter!=listInit.end();iter++)
@@ -109,22 +107,10 @@ private:
 				i++;
 			}
 			int arrlen=listInit.size();
-			if(std::is_same<T,int>::value)
-				now=json.createArray(INT,arrlen,(void*)arr);
-			else if(std::is_same<T,double>::value)
-				now=json.createArray(FLOAT,arrlen,(void*)arr);
-			else if(std::is_same<T,const char*>::value)
-				now=json.createArray(STRING,arrlen,(void*)arr);
-			else if(std::is_same<T,bool>::value)
-				now=json.createArray(BOOL,arrlen,(void*)arr);
-			else
-			{
-				error="type wrong";
-				type=EMPTY;
-			}
-			pval=malloc(sizeof(char)*strlen(now)+10);
-			len=sizeof(char)*strlen(now)+10;
-			strcpy((char*)pval,now);
+			Json::Node node(arr,arrlen);
+			pval=malloc(strlen(node())+10);
+			len=sizeof(char)*strlen(node())+10;
+			strcpy((char*)pval,node());
 			delete [] arr;
 		}
 		template<typename T>
@@ -193,23 +179,29 @@ public:
 			isArray=false;
 		}
 		template<typename T>
-		explicit Node(const std::vector<T>& data):Node()
+		explicit Node(const std::vector<T>& data,unsigned floNum=3):Node()
 		{
 			isArray=true;
 			result="[]";
+			this->floNum=floNum;
 			addArray(data);
 		}
 		template<typename T>
-		explicit Node(const T* data,unsigned len):Node()
+		explicit Node(const T* data,unsigned len,unsigned floNum=3):Node()
 		{
 			std::vector<T> arr(len);
 			for(unsigned i=0;i<len;i++)
 				arr[i]=data[i];
 			isArray=true;
 			result="[]";
+			this->floNum=floNum;
 			addArray((const std::vector<T>&)arr);
 		}
 		Node(std::initializer_list<std::pair<std::string,InitType>> initList):Node()
+		{
+			initWithList(initList);
+		}
+		void initWithList(std::initializer_list<std::pair<std::string,InitType>> initList)
 		{
 			for(auto iter=initList.begin();iter!=initList.end();iter++)
 			{
@@ -272,6 +264,26 @@ public:
 		{
 			addKeyValue(key.c_str(),data);
 			return *this;
+		}
+		template<typename T>
+		Node& operator=(T&& data)
+		{
+			addKeyValue(key.c_str(),data);
+			return *this;
+		}
+		bool changeSetting(unsigned floNum)
+		{
+			if(floNum>255)
+			{
+				error="flonum must less 256";
+				return false;
+			}
+			this->floNum=floNum;
+			return true;
+		}
+		inline const char* lastError()
+		{
+			return error;
 		}
 	private:
 		template<typename T>
@@ -344,7 +356,9 @@ public:
 			case STRING:
 				for(unsigned i=0;i<len;i++)
 				{
-					result+=arrStr[i];
+					result+='\"';
+					result+=+arrStr[i];
+					result+='\"';
 					result+=',';
 				}
 				break;
@@ -476,7 +490,7 @@ public:
 		template<typename T>
 		bool addKeyValue(const char* key,const std::vector<T>& data)
 		{
-			Node node(data);
+			Node node(data,floNum);
 			return addKeyValue(key,node);
 		}
 	};
@@ -485,12 +499,12 @@ private:
 	const char* error;
 	const char* nowKey;
 	char* word;
-	char* result;
 	unsigned maxLen;
 	unsigned floNum;
 	unsigned defaultSize;
 	bool isCheck;
 	Object* obj;
+	Node node;
 	std::unordered_map<char*,int> memory;
 	std::unordered_map<char*,char*> bracket;
 public:
@@ -500,15 +514,13 @@ public:
 		obj=NULL;
 		text=NULL;
 		word=NULL;
-		result=NULL;
 		nowKey=NULL;
 		isCheck=true;
 		maxLen=256;
 		floNum=3;
 		defaultSize=128;
-		result=this->createObject();
 		word=(char*)malloc(sizeof(char)*maxLen);
-		if(word==NULL||result==NULL)
+		if(word==NULL)
 		{
 			error="malloc wrong";
 			return;
@@ -517,54 +529,7 @@ public:
 	}
 	Json(std::initializer_list<std::pair<std::string,InitType>> initList):Json()
 	{
-		isCheck=false;
-		for(auto iter=initList.begin();iter!=initList.end();iter++)
-		{
-			if(iter->second.pval==NULL&&iter->second.type!=EMPTY)
-			{
-				error="init wrong";
-				return;
-			}
-			if(iter->second.error!=NULL)
-			{
-				error="init wrong";
-				return;
-			}
-			switch(iter->second.type)
-			{
-			case STRING:
-				if(false==addKeyVal(result,STRING,iter->first.c_str(),iter->second.pval))
-					return;
-				break;
-			case INT:
-				if(false==addKeyVal(result,INT,iter->first.c_str(),*(int*)iter->second.pval))
-					return;
-				break;
-			case FLOAT:
-				if(false==addKeyVal(result,FLOAT,iter->first.c_str(),*(double*)iter->second.pval))
-					return;
-				break;
-			case BOOL:
-				if(false==addKeyVal(result,BOOL,iter->first.c_str(),*(bool*)iter->second.pval))
-					return;
-				break;
-			case EMPTY:
-				if(false==addKeyVal(result,EMPTY,iter->first.c_str(),NULL))
-					return;
-				break;
-			case OBJ:
-				if(false==addKeyVal(result,OBJ,iter->first.c_str(),(char*)iter->second.pval))
-					return;
-				break;
-			case ARRAY:
-				if(false==addKeyVal(result,ARRAY,iter->first.c_str(),(char*)iter->second.pval))
-					return;
-				break;
-			default:
-				return;
-			}
-		}
-		isCheck=true;
+		node.initWithList(initList);
 	}
 	Json(const char* jsonText):Json()
 	{
@@ -610,10 +575,7 @@ public:
 			word=NULL;
 		}
 		if(text!=NULL)
-		{
 			free(text);
-			result=NULL;
-		}
 		for(auto iter=memory.begin();iter!=memory.end();iter++)
 			if(iter->first!=NULL)
 				free(iter->first);
@@ -670,279 +632,31 @@ public:
 		printObj(buffer,exmaple);
 		return buffer;
 	}
-	template<typename T>
-	bool addKeyVal(char*& obj,const char* key,T value)
+	inline Node createObject()
 	{
-		if(std::is_same<T,int>::value)
-			return addKeyVal(obj,INT,key,value);
-		else if(std::is_same<T,double>::value)
-			return addKeyVal(obj,FLOAT,key,value);
-		else if(std::is_same<T,char*>::value)
-			return addKeyVal(obj,OBJ,key,value);
-		else if(std::is_same<T,const char*>::value)
-			return addKeyVal(obj,STRING,key,value);
-		else if(std::is_same<T,std::string>::value)
-			return addKeyVal(obj,STRUCT,key,&value);
-		else if(std::is_same<T,bool>::value)
-			return addKeyVal(obj,BOOL,key,value);
-		else 
-			return addKeyVal(obj,EMPTY,key,NULL);
+		return Node();
+	}
+	inline Node createObject(std::initializer_list<std::pair<std::string,InitType>> initList)
+	{
+		return Node(initList);
 	}
 	template<typename T>
-	bool addKeyVal(char*& obj,const char* key,std::vector<T> value)
+	inline Node createArray(T* data,unsigned len)
 	{
-		char* arr=this->createArray(value);
-		return this->addKeyVal(obj,key,arr);
-	}
-	bool addKeyVal(char*& obj,TypeJson type,const char* key,...)
-	{
-		if(obj==NULL)
-		{
-			error="null buffer";
-			return false;
-		}
-		if(key==NULL)
-		{
-			error="key null";
-			return false;
-		}
-		va_list args;
-		va_start(args,key);
-		if(obj[strlen(obj)-1]=='}')
-		{
-			if(obj[strlen(obj)-2]!='{')
-				obj[strlen(obj)-1]=',';
-			else
-				obj[strlen(obj)-1]=0;
-		}
-		if(memory.find(obj)==memory.end())
-		{
-			error="wrong object";
-			return false;
-		}
-		while(memory[obj]-strlen(obj)<strlen(key)+4)
-			obj=enlargeMemory(obj);
-		sprintf(obj,"%s\"%s\":",obj,key);
-		int valInt=0;
-		char* valStr=NULL;
-		double valFlo=9;
-		bool valBool=false;
-		std::string* stdStr=NULL;
-		switch(type)
-		{
-		case INT:
-			valInt=va_arg(args,int);
-			while(memory[obj]-(int)strlen(obj)<30)
-				obj=enlargeMemory(obj);
-			sprintf(obj,"%s%d",obj,valInt);
-			break;
-		case FLOAT:
-			valFlo=va_arg(args,double);
-			while(memory[obj]-(int)strlen(obj)<32+(int)floNum)
-				obj=enlargeMemory(obj);
-			sprintf(obj,"%s%.*lf",obj,floNum,valFlo);
-			break;
-		case STRING:
-			valStr=va_arg(args,char*);
-			if(valStr==NULL)
-			{
-				error="null input";
-				return false;
-			}
-			while(memory[obj]-(int)strlen(obj)<(int)strlen(valStr)+32)
-				obj=enlargeMemory(obj);
-			sprintf(obj,"%s\"%s\"",obj,valStr);
-			break;
-		case EMPTY:
-			while(memory[obj]-strlen(obj)<32)
-				obj=enlargeMemory(obj);
-			strcat(obj,"null");
-			break;
-		case BOOL:
-			valBool=va_arg(args,int);
-			while(memory[obj]-(int)strlen(obj)<32)
-				obj=enlargeMemory(obj);
-			if(valBool==true)
-				strcat(obj,"true");
-			else
-				strcat(obj,"false");
-			break;
-		case STRUCT:
-			stdStr=(std::string*)va_arg(args,char*);
-			while(memory[obj]-(int)strlen(obj)<(int)stdStr->size()+32)
-				obj=enlargeMemory(obj);
-			if(stdStr==NULL)
-			{
-				error="null input";
-				return false;
-			}
-			sprintf(obj,"%s\"%s\"",obj,stdStr->c_str());
-			break;
-		case OBJ:
-		case ARRAY:
-			valStr=va_arg(args,char*);
-			while(memory[obj]-(int)strlen(obj)<(int)strlen(valStr)+32)
-				obj=enlargeMemory(obj);
-			if(valStr==NULL)
-			{
-				error="null input";
-				return false;
-			}
-			if(isCheck)
-			{
-				if(memory.find(valStr)!=memory.end())
-					sprintf(obj,"%s%s",obj,valStr);
-				else
-					sprintf(obj,"%s\"%s\"",obj,valStr);
-			}
-			else
-				sprintf(obj,"%s%s",obj,valStr);
-			break;
-		default:
-			error="can not insert this type";
-			strcat(obj,"}");
-			return false;
-		}
-		strcat(obj,"}");
-		return true;
-	}
-	char* createObject()
-	{
-		char* now=(char*)malloc(sizeof(char)*defaultSize);
-		if(now==NULL)
-		{
-			error="init worng";
-			return NULL;
-		}
-		else
-			memory.insert(std::pair<char*,int>{now,defaultSize});
-		memset(now,0,sizeof(char)*defaultSize);
-		strcpy(now,"{}");
-		return now;
+		return Node(data,len);
 	}
 	template<typename T>
-	char* createArray(std::vector<T>& arr)
+	Node createArray(std::vector<T>& data)
 	{
-		char* result=NULL;
-		if(std::is_same<T,int>::value)
-			result=createArray(INT,arr.size(),&arr[0]);
-		else if(std::is_same<T,double>::value)
-			result=createArray(FLOAT,arr.size(),&arr[0]);
-		else if(std::is_same<T,std::string>::value)
-			result=createArray(STRUCT,arr.size(),&arr);
-		else if(std::is_same<T,char*>::value)
-			result=createArray(OBJ,arr.size(),&arr[0]);
-		else if(std::is_same<T,const char*>::value)
-			result=createArray(STRING,arr.size(),&arr[0]);
-		else if(std::is_same<T,bool>::value)
-			result=createArray(BOOL,arr.size(),&arr[0]);
-		else
-			error="wrong vector type";
-		return result;
-	}
-	char* createArray(TypeJson type,unsigned arrLen,void* arr)
-	{
-		if(arr==NULL)
-		{
-			error="null input";
-			return NULL;
-		}
-		char* now=(char*)malloc(sizeof(char)*defaultSize);
-		if(now==NULL)
-		{
-			error="malloc worng";
-			return NULL;
-		}
-		else
-			memory.insert(std::pair<char*,unsigned>{now,defaultSize});
-		memset(now,0,sizeof(char)*defaultSize);
-		strcat(now,"[");
-		int* arrInt=(int*)arr;
-		double* arrFlo=(double*)arr;
-		char** arrStr=(char**)arr;
-		bool* arrBool=(bool*)arr;
-		auto& pvect=*(std::vector<std::string>*)arr;
-		unsigned i=0;
-		switch(type)
-		{
-		case INT:
-			for(i=0;i<arrLen;i++)
-			{
-				while(memory[now]-(int)strlen(now)<(int)std::to_string(arrInt[i]).size()+32)
-					now=enlargeMemory(now);
-				sprintf(now,"%s%d,",now,arrInt[i]);
-			}
-			break;
-		case FLOAT:
-			for(i=0;i<arrLen;i++)
-			{
-				while(memory[now]-(int)strlen(now)<(int)std::to_string(arrInt[i]).size()+32)
-					now=enlargeMemory(now);
-				sprintf(now,"%s%.*lf,",now,floNum,arrFlo[i]);
-			}
-			break;
-		case STRING:
-			for(i=0;i<arrLen;i++)
-			{
-				while(memory[now]-(int)strlen(now)<(int)strlen(arrStr[i])+32)
-					now=enlargeMemory(now);
-				sprintf(now,"%s\"%s\",",now,arrStr[i]);
-			}
-			break;
-		case STRUCT:
-			for(i=0;i<arrLen;i++)
-			{
-				while(memory[now]-(int)strlen(now)<(int)pvect[i].size()+32)
-					now=enlargeMemory(now);
-				sprintf(now,"%s\"%s\",",now,pvect[i].c_str());
-			}
-			break;
-		case OBJ:
-		case ARRAY:
-			for(i=0;i<arrLen;i++)
-			{
-				while(memory[now]-(int)strlen(now)<(int)strlen(arrStr[i])+32)
-					now=enlargeMemory(now);
-				if(isCheck)
-				{
-					if(memory.find(arrStr[i])!=memory.end())
-						sprintf(now,"%s%s,",now,arrStr[i]);
-					else
-						sprintf(now,"%s\"%s\",",now,arrStr[i]);
-				}
-				else
-					sprintf(now,"%s%s,",now,arrStr[i]);
-			}
-			break;
-		case BOOL:
-			for(i=0;i<arrLen;i++)
-			{
-				while(memory[now]-(int)strlen(now)<16)
-					now=enlargeMemory(now);
-				if(arrBool[i])
-					strcat(now,"true,");
-				else
-					strcat(now,"false,");
-			}
-			break;
-		default:
-			error="struct cannot be a array";
-			break;
-		}
-		if(now[strlen(now)-1]==',')
-			now[strlen(now)-1]=']';
-		else
-			strcat(now,"]");
-		now[strlen(now)]=0;
-		return now;
+		return Node(data);
 	}
 	inline Object* operator[](const char* key)
 	{
 		return (*obj)[key];
 	}
-	char*& operator()()
+	const char* operator()()
 	{
-		return result;
+		return node();
 	}
 	Json& operator()(const char* key)
 	{
@@ -952,14 +666,7 @@ public:
 	template<typename T>
 	Json& operator=(T value)
 	{
-		this->addKeyVal(this->result,nowKey,value);
-		return *this;
-	}
-	template<typename T>
-	Json& operator=(std::vector<T> value)
-	{
-		char* arr=this->createArray(value);
-		this->addKeyVal(this->result,nowKey,arr);
+		node(nowKey)=value;
 		return *this;
 	}
 	inline Object* getRootObj()
@@ -970,11 +677,12 @@ public:
 	{
 		return error;
 	}
-	inline void changeSetting(unsigned defaultSize=128,unsigned keyValMaxLen=256,unsigned floNum=3)
+	inline void changeSetting(unsigned floNum=3,unsigned defaultSize=128,unsigned keyValMaxLen=256)
 	{
 		this->defaultSize=defaultSize;
 		this->maxLen=keyValMaxLen>maxLen?keyValMaxLen:maxLen;
 		this->floNum=floNum;
+		node.changeSetting(floNum);
 	}
 private:
 	char* enlargeMemory(char* old)
