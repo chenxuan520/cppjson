@@ -99,7 +99,7 @@ private:
 		InitType(std::initializer_list<T> listInit)
 		{
 			type=ARRAY;
-			T* arr=new T[listInit.size()];
+			std::vector<T> arr(listInit.size());
 			int i=0;
 			for(auto iter=listInit.begin();iter!=listInit.end();iter++)
 			{
@@ -108,10 +108,10 @@ private:
 			}
 			int arrlen=listInit.size();
 			Json::Node node(arr,arrlen);
-			pval=malloc(strlen(node())+10);
-			len=sizeof(char)*strlen(node())+10;
+			pval=malloc(node.getLen()+10);
+			len=node.getLen()+10;
+			memset(pval,0,node.getLen()+10);
 			strcpy((char*)pval,node());
-			delete [] arr;
 		}
 		template<typename T>
 		InitType(T val)
@@ -139,11 +139,19 @@ private:
 		}
 		InitType(const char* pt)
 		{
+			initChar(STRING,pt);
+		}
+		InitType(char* pt)
+		{
+			initChar(STRING,pt);
+		}
+		void initChar(TypeJson ptype,const char* pt)
+		{
 			if(pt==nullptr)
 				type=EMPTY;
 			else
 			{
-				type=STRING;
+				type=ptype;
 				pval=malloc(sizeof(char)*strlen(pt)+10);
 				len=sizeof(sizeof(char)*strlen(pt)+10);
 				if(pval==NULL)
@@ -270,6 +278,15 @@ public:
 		{
 			addKeyValue(key.c_str(),data);
 			return *this;
+		}
+		Node& operator=(std::string& data)
+		{
+			addKeyValue(key.c_str(),data.c_str());
+			return *this;
+		}
+		unsigned inline getLen()
+		{
+			return result.size();
 		}
 		bool changeSetting(unsigned floNum)
 		{
@@ -452,8 +469,16 @@ public:
 				else
 					result+="false";
 				break;
-			case OBJ:
 			case ARRAY:
+				valStr=va_arg(args,char*);
+				if(valStr==NULL)
+				{
+					error="null input";
+					return false;
+				}
+				result+=valStr;
+				break;
+			case OBJ:
 				valStr=va_arg(args,char*);
 				valNode=(Node*)valStr;
 				if(valStr==NULL)

@@ -24,20 +24,26 @@ void funtion()
 	if(json["first Name"]!=NULL)
 		printf("%s\n",json["first Name"]->strVal.c_str());
 	//create a new json text
-	auto node=json.createObject({{"status","ok"},{"arr",{1,2,3,4}}});
+	auto node=json.createObject({{"status","ok"},{"arr",{1,2,3,4}},{"strarr",{"we","lpl"}}});
 	//create an array to json
 	vector<double> arrFlo={1.2,3.4,4.5};
 	auto arr=json.createArray(vector<string>()={"str1","str2"});
 	const char* oldStr[]={"asdf","nkjn"};
+	vector<Json::Node> arrNode;
 	auto arrOld=json.createArray(oldStr,2);
 	json.changeSetting(2);
+	node("std")=string("koko");
 	node("str")="ok";
 	node("null")=nullptr;
 	node("bool")=true;
+	for(unsigned i=0;i<5;i++)
+		arrNode.push_back(node);
+	node("arrnode")=arrNode;
 	node("Int")=1000;
 	node("double")=1.43;
 	node("boolArr")=vector<bool>()={true,false};
 	node("nodeself")=node;
+	//add node to json
 	json("node")=node;
 	json("numInt")=1000;
 	json("arr")=arr;
@@ -45,6 +51,9 @@ void funtion()
 	json("arrint")=vector<int>()={1,2,3};
 	json("arrFlo")=arrFlo;
 	printf("result:%s\n",json());
+	json.analyseText(json());
+	printf("\n\n%s\n",json.formatPrint(json.getRootObj()));
+	free(temp);
 }
 int main()
 {
