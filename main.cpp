@@ -54,6 +54,18 @@ void funtion()
 	json.analyseText(json());
 	printf("\n\n%s\n",json.formatPrint(json.getRootObj()));
 	free(temp);
+	Json json2={
+		{"float",12.3},
+		{"int",23},
+		{"bool",true},
+		{"str","string"},
+		{"null",nullptr},
+		{"stdstr",string("chenxuan")},
+		{"arrFloat",{2.3,8.9,2.3}},
+		{"arrBool",{true,false}},
+		{"arrStr",{"chenxuan","create"}}
+	};
+	printf("json2:%s \n",json2());
 }
 int main()
 {
