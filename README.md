@@ -2,6 +2,8 @@
 
 使用C++写的**json解析和生成,格式化**的轻量库
 
+#### English []introduction](./README.en.md)
+
 ## 作者
 
 **chenxuan**
@@ -51,22 +53,29 @@
 
 #### 生成json数据
 
-##### 通用添加方法
+##### 创造json对象
 
 ```cpp
-    //create a new json text
-    char* getStr=json.createObject();
-    json.addKeyVal(getStr,Json::STRING,"try","exmaple");
-    printf("%s\n",getStr);
-    // an others way to add
-	json.addKeyVal(getStr,"new","string");
-	json.addKeyVal(getStr,"file name",(const char*)temp);
-	json.addKeyVal(getStr,"newarr",arr);
+     //create a new json text
+     Json::Node node={{"status","ok"}};
+     auto node=json.createObject({{"status","ok"},{"arr",{1,2,3,4}},{"strarr",{"we","lpl"}}});
 ```
 
-> 第二种方法添加时候字符串需要转为const char*
+> 可以直接通过{}来初始化对象
+
+##### 创建json数组
+
+```cpp
+    //C model
+    const char* oldStr[]={"asdf","nkjn"};
+    auto arrOld=json.createArray(oldStr,2);
+    //C++ vector
+    //add Add directly
+```
+
+> C的数组需要调用createArray
 > 
-> 推荐使用第二种方法添加
+> C++的Vector可以直接添加(下面有实例)
 
 ##### 初始化添加
 
@@ -82,20 +91,30 @@
         {"arrBool",{true,false}},
         {"arrStr",{"chenxuan","create"}}
     };
-    printf("new create:\n%s\n",json2());
-    //after begin you can continue add ketValue
-    json2.addKeyVal(json2(),Json::STRING,"temp","chenxuan");
     json2("new arr")=arr;
     printf("new create:\n%s\n",json2());
+    //node add kry value
+    auto arr=json.createArray(vector<string>()={"str1","str2"});
+    const char* oldStr[]={"asdf","nkjn"};
+    vector<Json::Node> arrNode;
+    auto arrOld=json.createArray(oldStr,2);
+    json.changeSetting(2);
+    node("std")=string("koko");
+    node("str")="ok";
+    node("null")=nullptr;
+    node("bool")=true;
+    for(unsigned i=0;i<5;i++)
+        arrNode.push_back(node);
+    node("arrnode")=arrNode;
+    node("Int")=1000;
+    node("double")=1.43;
+    node("boolArr")=vector<bool>()={true,false};
+    node("nodeself")=node;
 ```
 
-> 第二种方法添加之后通过()获取结果
+>  添加key Value方式均为("key")=Value
 > 
-> 第二种方法之后依旧可以通过第一种方法继续添加
-> 
-> 第二种方法不支持二维数组以及对象数组,因为高维后数组和对象界限会模糊
-> 
-> 如果需要请用第一种添加
+> 获取结果的方式均为()
 
 #### 格式化json
 

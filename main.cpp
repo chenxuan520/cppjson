@@ -24,51 +24,48 @@ void funtion()
 	if(json["first Name"]!=NULL)
 		printf("%s\n",json["first Name"]->strVal.c_str());
 	//create a new json text
-	char* getStr=json.createObject();
-	json.addKeyVal(getStr,Json::STRING,"try","exmaple");
-	json.addKeyVal(getStr,"null",nullptr);
+	auto node=json.createObject({{"status","ok"},{"arr",{1,2,3,4}},{"strarr",{"we","lpl"}}});
 	//create an array to json
-	int arrInt[5]={1,2,3,4,5};
-	char* arr=json.createArray(Json::INT,5,arrInt);
-	json.addKeyVal(getStr,Json::ARRAY,"arr",arr);
-	json.addKeyVal(getStr,Json::EMPTY,"empty",NULL);
-	// an others way to add
-	json.addKeyVal(getStr,"new","string");
-	json.addKeyVal(getStr,"file name",(const char*)temp);
-	json.addKeyVal(getStr,"newarr",arr);
-	json.addKeyVal(getStr,"newnum",12);
-	//add obj arr
-	auto str1=json.createObject();
-	json.addKeyVal(str1,"koko","hshsh");
-	auto str2=json.createObject();
-	json.addKeyVal(str2,"koko","hshsh");
-	vector<char*> newObj={str1,str2};
-	char str3[30]="hahaha";
-	json.addKeyVal(getStr,"oldstr",str3);
-	json.addKeyVal(getStr,"arrVct",json.createArray(newObj));
-	printf("%s\n",getStr);
+	vector<double> arrFlo={1.2,3.4,4.5};
+	auto arr=json.createArray(vector<string>()={"str1","str2"});
+	const char* oldStr[]={"asdf","nkjn"};
+	vector<Json::Node> arrNode;
+	auto arrOld=json.createArray(oldStr,2);
+	json.changeSetting(2);
+	node("std")=string("koko");
+	node("str")="ok";
+	node("null")=nullptr;
+	node("bool")=true;
+	for(unsigned i=0;i<5;i++)
+		arrNode.push_back(node);
+	node("arrnode")=arrNode;
+	node("Int")=1000;
+	node("double")=1.43;
+	node("boolArr")=vector<bool>()={true,false};
+	node("nodeself")=node;
+	//add node to json
+	json("node")=node;
+	json("numInt")=1000;
+	json("arr")=arr;
+	json("arrold")=arrOld;
+	json("arrint")=vector<int>()={1,2,3};
+	json("arrFlo")=arrFlo;
+	printf("result:%s\n",json());
+	json.analyseText(json());
+	printf("\n\n%s\n",json.formatPrint(json.getRootObj()));
 	free(temp);
-	//create json in begin
 	Json json2={
 		{"float",12.3},
 		{"int",23},
 		{"bool",true},
 		{"str","string"},
 		{"null",nullptr},
+		{"stdstr",string("chenxuan")},
 		{"arrFloat",{2.3,8.9,2.3}},
 		{"arrBool",{true,false}},
 		{"arrStr",{"chenxuan","create"}}
 	};
-	vector<string> arrv={"op","io"};
-	char* arrt=json2.createArray(arrv);
-	printf("new create:\n%s\n",json2());
-	//after begin you can continue add ketValue
-	json2.addKeyVal(json2(),Json::STRING,"temp","chenxuan");
-	json2.addKeyVal(json2(),"arrv",arrt);
-	char* arr1=json2.createArray(Json::INT,5,arrInt);
-	json2("new arr")=arrv;
-	json2("arr1")=arr1;
-	printf("new create:\n%s\n",json2());
+	printf("json2:%s \n",json2());
 }
 int main()
 {

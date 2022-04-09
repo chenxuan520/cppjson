@@ -51,22 +51,29 @@ All code is included in the json.h header file, and all functions can be used by
 
 #### Generate json data
 
-##### General add method
+##### Create json object
 
 ```cpp
-    //create a new json text
-    char* getStr=json.createObject();
-    json.addKeyVal(getStr,Json::STRING,"try","exmaple");
-    printf("%s\n",getStr);
-    // an others way to add
-json.addKeyVal(getStr,"new","string");
-json.addKeyVal(getStr,"file name",(const char*)temp);
-json.addKeyVal(getStr,"newarr",arr);
+     //create a new json text
+     Json::Node node={{"status","ok"}};
+     auto node=json.createObject({{"status","ok"},{"arr",{1,2,3,4}},{"strarr",{"we","lpl"}}} );
 ```
 
-> When the second method is added, the string needs to be converted to const char*
-> 
-> It is recommended to use the second method to add
+> Objects can be initialized directly through {}
+
+##### Create json array
+
+```cpp
+    //C model
+    const char* oldStr[]={"asdf","nkjn"};
+    auto arrOld=json.createArray(oldStr,2);
+    //C++ vector
+    //add Add directly
+```
+
+C's arrays need to call createArray
+
+> Vector of C++ can be added directly (there are examples below)
 
 ##### Initialize add
 
@@ -82,20 +89,30 @@ json.addKeyVal(getStr,"newarr",arr);
         {"arrBool",{true,false}},
         {"arrStr",{"chenxuan","create"}}
     };
-    printf("new create:\n%s\n",json2());
-    //after begin you can continue add ketValue
-    json2.addKeyVal(json2(),Json::STRING,"temp","chenxuan");
     json2("new arr")=arr;
     printf("new create:\n%s\n",json2());
+    //node add kry value
+    auto arr=json.createArray(vector<string>()={"str1","str2"});
+    const char* oldStr[]={"asdf","nkjn"};
+    vector<Json::Node> arrNode;
+    auto arrOld=json.createArray(oldStr,2);
+    json.changeSetting(2);
+    node("std")=string("koko");
+    node("str")="ok";
+    node("null")=nullptr;
+    node("bool")=true;
+    for(unsigned i=0;i<5;i++)
+        arrNode.push_back(node);
+    node("arrnode")=arrNode;
+    node("Int")=1000;
+    node("double")=1.43;
+    node("boolArr")=vector<bool>()={true,false};
+    node("nodeself")=node;
 ```
 
-> After the second method is added, get the result through ()
+> The way to add key Value is ("key")=Value
 > 
-> After the second method, you can still continue to add through the first method
-> 
-> The second method does not support two-dimensional arrays and object arrays, because the boundaries between arrays and objects will be blurred after high dimensions
-> 
-> Use the first add if needed
+> The way to get the result is ()
 
 #### format json
 
@@ -110,7 +127,7 @@ json.addKeyVal(getStr,"newarr",arr);
 
 ## Supplementary notes
 
-- Does not support json array types such as [1, "dad", true], because the addition of such arrays is complicated and not used much, ~~too lazy to support~~
+- Does not support json array types such as [1, "dad", true], because the addition of such arrays is complicated and not used much, ~~ too lazy to support~~
 
 - Because it has just been developed, 100% compatibility cannot be guaranteed after subsequent improvements (as compatible as possible)
 
