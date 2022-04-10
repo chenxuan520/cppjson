@@ -63,9 +63,11 @@ void funtion()
 		{"stdstr",string("chenxuan")},
 		{"arrFloat",{2.3,8.9,2.3}},
 		{"arrBool",{true,false}},
-		{"arrStr",{"chenxuan","create"}}
+		{"arrStr",{{"chenxuan","create"},{"lover","xiaozhu"}}},
+		{"node",node},
+		{"arrVec",arrFlo}
 	};
-	printf("json2:%s \n",json2());
+	printf("json2:\n%s \n",json2());
 }
 int main()
 {
