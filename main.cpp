@@ -1,6 +1,7 @@
 #include <iostream>
 #include "./json.h"
 using namespace std;
+using namespace cppweb;
 void funtion()
 {
 	char* temp=(char*)malloc(sizeof(char)*600);
@@ -18,28 +19,34 @@ void funtion()
 	const char* result=json.formatPrint(json.getRootObj());
 	printf("%s\n",result);
 	// find the key value
-	if(json["empt"]!=NULL)
-		for(unsigned i=0;i<json["empt"]->arr.size();i++)
-			printf("%f\n",json["empt"]->arr[i]->floVal);
-	if(json["first Name"]!=NULL)
-		printf("%s\n",json["first Name"]->strVal.c_str());
+	if(json["empt"]!=Json::npos)
+		for(unsigned i=0;i<json["empt"].arr.size();i++)
+			printf("%f\n",json["empt"][i].floVal);
+	if(json["first Name"]!=Json::npos)
+		printf("%s\n",json["first Name"].strVal.c_str());
+	if(json["ept"]["io"]!=Json::npos)
+		printf("ept:ko:%lf\n",json["ept"]["ko"].floVal);
 	//create a new json text
 	auto node=json.createObject({{"status","ok"},{"arr",{1,2,3,4}},{"strarr",{"we","lpl"}}});
 	printf("node:%s\n",node());
 	//create an array to json
 	vector<double> arrFlo={1.2,3.4,4.5};
-	auto arr=json.createArray(vector<string>()={"str1","str2"});
 	const char* oldStr[]={"asdf","nkjn"};
-	vector<Json::Node> arrNode;
 	auto arrOld=json.createArray(oldStr,2);
-	json.changeSetting(2);
-	node("std")=string("koko");
-	node("str")="ok";
-	for(unsigned i=0;i<2;i++)
-		arrNode.push_back(node);
+	vector<Json::Node> arrNode{
+		{
+			{"status","ok"},
+		},
+		{
+			{"status","wrong"},
+		}
+	};
+	node("arrarr")=vector<vector<int>>()={{1,2,3},{4,5,6}};
+	node("stdStr")=string("koko");
+	node("strOld")="ok";
 	node("null")=nullptr;
 	node("bool")=true;
-	node("arrnode")=arrNode;
+	node("arrNode")=arrNode;
 	node("Int")=1000;
 	node("double")=1.43;
 	node("boolArr")=vector<bool>()={true,false};
@@ -52,7 +59,6 @@ void funtion()
 	/* //add node to json */
 	json("node")=node;
 	json("numInt")=1000;
-	json("arr")=arr;
 	json("arrold")=arrOld;
 	json("arrint")=vector<int>()={1,2,3};
 	json("arrFlo")=arrFlo;

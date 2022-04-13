@@ -10,6 +10,8 @@
 #include <unordered_map>
 #include <initializer_list>
 #include <type_traits>
+namespace cppweb{
+
 class Json{
 public:
 	enum TypeJson{//object type
@@ -36,18 +38,43 @@ public:
 			nextObj=NULL;
 			objVal=NULL;
 		}
-		Object* operator[](const char* key)
+		bool operator==(const Object& old)
+		{
+			return &old==this;
+		}
+		bool operator!=(const Object& old)
+		{
+			return &old!=this;
+		}
+		Object& operator[](const char* key)
 		{
 			Object* now=this->nextObj;
 			while(now!=NULL)
 			{
 				if(now->key==key)
-					return now;
+				{
+					if(now->type==OBJ)
+						return *now->objVal;
+					else
+						return *now;
+				}
 				now=now->nextObj;
 			}
-			return NULL;
+			return Json::npos;
+		}
+		Object& operator[](unsigned pos)
+		{
+			if(this->type!=ARRAY||this->arr.size()<=pos)
+				return Json::npos;
+			else
+				return *this->arr[pos];
+		}
+		inline size_t size()
+		{
+			return this->arr.size();
 		}
 	};
+	static Object npos;
 	class Node;
 private:
 	struct InitType{//struct for ctreate such as {{"as","ds"}} in init;
@@ -234,6 +261,14 @@ public:
 			else
 				return addArray(EMPTY,NULL,arr.size());
 			return true;
+		}
+		template<typename T>
+		bool addArray(const std::vector<std::vector<T>>& arr)
+		{
+			std::vector<Node> temp;
+			for(auto& now:arr)
+				temp.push_back(Node(now));
+			return addArray(temp);
 		}
 		bool addArray(const std::vector<bool>& arr)
 		{
@@ -443,6 +478,7 @@ private:
 	Object* obj;
 	Node node;
 	std::string wordStr;
+	std::string formatStr;
 	std::unordered_map<char*,int> memory;
 	std::unordered_map<char*,char*> bracket;
 public:
@@ -540,16 +576,9 @@ public:
 	}
 	const char* formatPrint(const Object* exmaple)
 	{
-		char* buffer=(char*)malloc(sizeof(char)*defaultSize*10);
-		if(buffer==NULL)
-		{
-			error="malloc wrong";
-			return NULL;
-		}
-		memset(buffer,0,sizeof(char)*defaultSize*10);
-		memory.insert(std::pair<char*,int>{buffer,sizeof(char)*defaultSize*10});
-		printObj(buffer,exmaple);
-		return buffer;
+		formatStr.clear();
+		printObj(formatStr,exmaple);
+		return formatStr.c_str();
 	}
 	inline Node createObject()
 	{
@@ -569,7 +598,7 @@ public:
 	{
 		return Node(data);
 	}
-	inline Object* operator[](const char* key)
+	inline Object& operator[](const char* key)
 	{
 		return (*obj)[key];
 	}
@@ -841,7 +870,7 @@ private:
 	{
 		char* now=begin+1,*nextOne=now;
 		buffer.clear();
-		nextOne=strchr(now+1,'\"');
+		nextOne=strchr(now,'\"');
 		while(nextOne!=NULL&&*(nextOne-1)=='\\')
 			nextOne=strchr(nextOne+1,'\"');
 		if(nextOne==NULL)
@@ -959,120 +988,134 @@ private:
 			return false;
 		return true;
 	}
-	bool printObj(char*& buffer,const Object* obj)
+	void printObj(std::string& buffer,const Object* obj)
 	{
+		if(obj==NULL)
+		{
+			error="wrong message";
+			return;
+		}
 		unsigned deep=0;
-		char* line=strrchr(buffer,'\n');
-		if(line==NULL)
+		char word[256]={0};
+		auto line=buffer.find_last_of('\n');
+		if(line==buffer.npos)
 			deep=1;
 		else
-			deep=buffer+strlen(buffer)-line;
-		strcat(buffer,"{\n");
+			deep=buffer.c_str()+buffer.size()-&buffer[line];
+		buffer+="{\n";
 		Object* now=obj->nextObj;
 		while(now!=NULL)
 		{
-			while(memory[buffer]-(int)strlen(buffer)<(int)now->key.size()+(int)now->strVal.size()+64+(int)deep*5)
-				buffer=enlargeMemory(buffer);
 			for(unsigned i=0;i<deep+4;i++)
-				strcat(buffer," ");
+				buffer+=' ';
+			buffer+='\"'+now->key+"\":";
 			switch(now->type)
 			{
 			case INT:
-				sprintf(buffer,"%s\"%s\":%d,",buffer,now->key.c_str(),now->intVal);
+				buffer+=std::to_string(now->intVal)+',';
 				break;
 			case FLOAT:
-				sprintf(buffer,"%s\"%s\":%.*lf,",buffer,now->key.c_str(),floNum,now->floVal);
+				sprintf(word,"%.*lf,",floNum,now->floVal);
+				buffer+=word;
 				break;
 			case STRING:
-				sprintf(buffer,"%s\"%s\":\"%s\",",buffer,now->key.c_str(),now->strVal.c_str());
+				buffer+='\"'+now->strVal+"\",";
 				break;
 			case BOOL:
 				if(now->boolVal)
-					sprintf(buffer,"%s\"%s\":true,",buffer,now->key.c_str());
+					buffer+="true,";
 				else
-					sprintf(buffer,"%s\"%s\":false,",buffer,now->key.c_str());
+					buffer+="false,";
 				break;
 			case OBJ:
-				sprintf(buffer,"%s\"%s\":",buffer,now->key.c_str());
 				printObj(buffer,now->objVal);
-				strcat(buffer,",");
+				buffer+=',';
 				break;
 			case ARRAY:
-				sprintf(buffer,"%s\"%s\":",buffer,now->key.c_str());
 				printArr(buffer,now->arrType,now->arr);
-				strcat(buffer,",");
+				buffer+=',';
 				break;
 			case EMPTY:
-				sprintf(buffer,"%s\"%s\":null",buffer,now->key.c_str());
+				buffer+="null,";
 				break;
 			default:
 				error="struct cannot print";
-				return false;
 			}
-			strcat(buffer,"\n");
+			buffer+='\n';
 			now=now->nextObj;
 			if(now==NULL)
-				*strrchr(buffer,',')=' ';
+			{
+				auto pos=buffer.find_last_of(',');
+				if(pos!=buffer.npos)
+					buffer[pos]=' ';
+			}
 		}
 		for(unsigned i=0;i<deep-1;i++)
-			strcat(buffer," ");
-		strcat(buffer,"}");
-		return true;
+			buffer+=" ";
+		buffer+="}";
+		return;
 	}
-	bool printArr(char*& buffer,TypeJson type,const std::vector<Object*>& arr)
+	void printArr(std::string& buffer,TypeJson type,const std::vector<Object*>& arr)
 	{
 		unsigned deep=0;
-		char* line=strrchr(buffer,'\n');
-		if(line==NULL)
-			deep=0;
+		char word[256]={0};
+		auto line=buffer.find_last_of('\n');
+		if(line==buffer.npos)
+			deep=1;
 		else
-			deep=buffer+strlen(buffer)-line;
-		strcat(buffer,"[\n");
+			deep=buffer.c_str()+buffer.size()-&buffer[line];
+		buffer+="[\n";
 		for(unsigned i=0;i<arr.size();i++)
 		{
-			while(memory[buffer]-(int)strlen(buffer)<(int)arr[i]->strVal.size()+64+(int)deep*5)
-				buffer=enlargeMemory(buffer);
 			for(unsigned i=0;i<deep+4;i++)
-				strcat(buffer," ");
+				buffer+=" ";
 			switch(type)
 			{
 			case INT:
-				sprintf(buffer,"%s%d,",buffer,arr[i]->intVal);
+				buffer+=std::to_string(arr[i]->intVal)+',';
 				break;
 			case FLOAT:
-				sprintf(buffer,"%s%.*lf,",buffer,floNum,arr[i]->floVal);
+				sprintf(word,"%.*lf,",floNum,arr[i]->floVal);
+				buffer+=word;
 				break;
 			case STRING:
-				sprintf(buffer,"%s\"%s\",",buffer,arr[i]->strVal.c_str());
+				buffer+='\"'+arr[i]->strVal+"\",";
 				break;
 			case BOOL:
 				if(arr[i]->boolVal)
-					strcat(buffer,"true,");
+					buffer+="true,";
 				else
-					strcat(buffer,"false,");
+					buffer+="false,";
 				break;
 			case OBJ:
-				printObj(buffer,arr[i]);
-				strcat(buffer,",");
+				printObj(buffer,arr[i]->objVal);
+				buffer+=',';
 				break;
 			case ARRAY:
 				printArr(buffer,arr[i]->arrType,arr[i]->arr);
-				strcat(buffer,",");
+				buffer+=',';
+				break;
+			case EMPTY:
+				buffer+="null,";
 				break;
 			default:
 				error="struct cannot print";
-				return false;
 			}
-			strcat(buffer,"\n");
+			buffer+='\n';
 			if(i==arr.size()-1)
-				*strrchr(buffer,',')=' ';
+			{
+				auto pos=buffer.find_last_of(',');
+				if(pos!=buffer.npos)
+					buffer[pos]=' ';
+			}
 		}
 		for(unsigned i=0;i<deep-1;i++)
-			strcat(buffer," ");
-		strcat(buffer,"]");
-		return true;
+			buffer+=" ";
+		buffer+="]";
 	}
 };
+Json::Object Json::npos;
+}
 class FileGet{
 private:
 	char* pbuffer;
