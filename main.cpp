@@ -1,4 +1,5 @@
 #include <iostream>
+#include <fstream>
 #include "./json.h"
 using namespace std;
 using namespace cppweb;
@@ -7,9 +8,12 @@ void funtion()
 	char* temp=(char*)malloc(sizeof(char)*600);
 	printf("please input the json file to read:");
 	scanf("%600s",temp);
-	FileGet file;
+	std::ifstream in(temp, std::ios::in);
+	std::istreambuf_iterator<char> beg(in), end;
+	std::string strdata(beg, end);
+	in.close();
 	//create tree for json text
-	Json json(file.getFileBuff(temp));
+	Json json(strdata.c_str());
 	if(json.lastError()!=NULL)
 	{
 		printf("%s\n",json.lastError());
