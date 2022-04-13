@@ -11,7 +11,6 @@
 #include <initializer_list>
 #include <type_traits>
 namespace cppweb{
-
 class Json{
 public:
 	enum TypeJson{//object type
@@ -68,10 +67,6 @@ public:
 				return Json::npos;
 			else
 				return *this->arr[pos];
-		}
-		inline size_t size()
-		{
-			return this->arr.size();
 		}
 	};
 	static Object npos;
@@ -196,7 +191,7 @@ public:
 		{
 			return result.c_str();
 		}
-		Node& operator()(const char* key)
+		Node& operator[](const char* key)
 		{
 			this->key=key;
 			return *this;
@@ -574,10 +569,12 @@ public:
 			return false;
 		return true;
 	}
-	const char* formatPrint(const Object* exmaple)
+	const char* formatPrint(Object& example)
 	{
 		formatStr.clear();
-		printObj(formatStr,exmaple);
+		if(obj==NULL)
+			return NULL;
+		printObj(formatStr,&example);
 		return formatStr.c_str();
 	}
 	inline Node createObject()
@@ -598,15 +595,11 @@ public:
 	{
 		return Node(data);
 	}
-	inline Object& operator[](const char* key)
-	{
-		return (*obj)[key];
-	}
 	const char* operator()()
 	{
 		return node();
 	}
-	Json& operator()(const char* key)
+	Json& operator[](const char* key)
 	{
 		nowKey=key;
 		return *this;
@@ -614,12 +607,15 @@ public:
 	template<typename T>
 	Json& operator=(T value)
 	{
-		node(nowKey)=value;
+		node[nowKey]=value;
 		return *this;
 	}
-	inline Object* getRootObj()
+	inline Object& getRootObj()
 	{
-		return obj;
+		if(obj!=NULL)
+			return *obj;
+		else
+			return Json::npos;
 	}
 	inline const char* lastError()
 	{
@@ -992,7 +988,8 @@ private:
 	{
 		if(obj==NULL)
 		{
-			error="wrong message";
+			buffer+="{}";
+			error="message wrong";
 			return;
 		}
 		unsigned deep=0;
@@ -1088,7 +1085,7 @@ private:
 					buffer+="false,";
 				break;
 			case OBJ:
-				printObj(buffer,arr[i]->objVal);
+				printObj(buffer,arr[i]);
 				buffer+=',';
 				break;
 			case ARRAY:

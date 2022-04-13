@@ -19,13 +19,14 @@ void funtion()
 	const char* result=json.formatPrint(json.getRootObj());
 	printf("%s\n",result);
 	// find the key value
-	if(json["empt"]!=Json::npos)
-		for(unsigned i=0;i<json["empt"].arr.size();i++)
-			printf("%f\n",json["empt"][i].floVal);
-	if(json["first Name"]!=Json::npos)
-		printf("%s\n",json["first Name"].strVal.c_str());
-	if(json["ept"]["io"]!=Json::npos)
-		printf("ept:ko:%lf\n",json["ept"]["ko"].floVal);
+	auto root=json.getRootObj();
+	if(root["empt"]!=Json::npos)
+		for(unsigned i=0;i<root["empt"].arr.size();i++)
+			printf("%f\n",root["empt"][i].floVal);
+	if(root["first Name"]!=Json::npos)
+		printf("%s\n",root["first Name"].strVal.c_str());
+	if(root["ept"]["io"]!=Json::npos)
+		printf("ept:ko:%lf\n",root["ept"]["ko"].floVal);
 	//create a new json text
 	auto node=json.createObject({{"status","ok"},{"arr",{1,2,3,4}},{"strarr",{"we","lpl"}}});
 	printf("node:%s\n",node());
@@ -41,27 +42,28 @@ void funtion()
 			{"status","wrong"},
 		}
 	};
-	node("arrarr")=vector<vector<int>>()={{1,2,3},{4,5,6}};
-	node("stdStr")=string("koko");
-	node("strOld")="ok";
-	node("null")=nullptr;
-	node("bool")=true;
-	node("arrNode")=arrNode;
-	node("Int")=1000;
-	node("double")=1.43;
-	node("boolArr")=vector<bool>()={true,false};
-	node("nodeself")=node;
-	node("obj")={
+	node["arrarr"]=vector<vector<int>>()={{1,2,3},{4,5,6}};
+	node["stdStr"]=string("koko");
+	node["strOld"]="ok";
+	node["null"]=nullptr;
+	node["bool"]=true;
+	node["arrNode"]=arrNode;
+	node["Int"]=1000;
+	node["double"]=1.43;
+	node["boolArr"]=vector<bool>()={true,false};
+	node["nodeself"]=node;
+	node["obj"]={
 		{"status","ok"},
 		{"vector",vector<string>()={"chenxuan","is","winner"}}
 	};
 	printf("node:\n%s\n",node());
 	/* //add node to json */
-	json("node")=node;
-	json("numInt")=1000;
-	json("arrold")=arrOld;
-	json("arrint")=vector<int>()={1,2,3};
-	json("arrFlo")=arrFlo;
+	json["node"]=node;
+	json["numInt"]=1000;
+	json["arrold"]=arrOld;
+	json["arrint"]=vector<int>()={1,2,3};
+	json["arrFlo"]=arrFlo;
+	json["emp arr"]=vector<int>();
 	printf("result:\n%s\n",json());
 	json.analyseText(json());
 	printf("\n\n%s\n",json.formatPrint(json.getRootObj()));
@@ -77,7 +79,9 @@ void funtion()
 		{"arrBool",{true,false}},
 		{"arrStr",{{"chenxuan","create"},{"lover","xiaozhu"}}},
 		{"node",node},
-		{"arrVec",arrFlo}
+		{"arrVec",arrFlo},
+		{"empty arr",vector<int>()},
+		{"empty obj",{}}
 	};
 	printf("json2:\n%s \n",json2());
 }
