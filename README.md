@@ -16,15 +16,13 @@
 
 ## 制作说明
 
-1. 除了少部分使用STL,大部分都是C制作
+1. 源代码大约1000行,包括解析,生成和格式化json数据
 
-2. 源代码大约1000行,包括解析,生成和格式化json数据
+2. 支持使用//和/**/作为注释
 
-3. 支持使用//和/**/作为注释
+3. 使用非常简便.上手时间短
 
-4. 使用非常简便.上手时间短
-
-5. 可以通过{}直接像go一样生成json,非常方便
+4. 可以通过{}直接像go一样生成json,非常方便
 
 ## 使用方法
 
@@ -51,6 +49,8 @@
         printf("%s\n",json["first Name"]->strVal.c_str());
 ```
 
+> 数组类型全都是object类型,可以通过->获取内部
+
 #### 生成json数据
 
 ##### 创造json对象
@@ -62,58 +62,66 @@
 ```
 
 > 可以直接通过{}来初始化对象
+> 
+> json本身就是就是node对象,可以使用node的方法添加键值对
 
-##### 创建json数组
+##### 添加键值对
 
 ```cpp
-    //C model
-    const char* oldStr[]={"asdf","nkjn"};
-    auto arrOld=json.createArray(oldStr,2);
-    //C++ vector
-    //add Add directly
+	node("stdStr")=string("koko");//添加字符串
+	node("strOld")="ok";
+	node("null")=nullptr;//添加null类型
+	node("bool")=true;//添加bool类型
+	node("Int")=1000;//添加int
+	node("double")=1.43;//添加double
 ```
 
-> C的数组需要调用createArray
+> C类型和C++的string类型都可以直接添加
 > 
-> C++的Vector可以直接添加(下面有实例)
+> 没有用[]原因是分析json数据用了[]
+
+##### 添加数组和对象
+
+```cpp
+    //添加对象,可以再创建一个node添加或者直接{}
+	node("nodeself")=node;
+	node("obj")={
+		{"status","ok"},
+		{"vector",vector<string>()={"chenxuan","is","winner"}}
+	};
+    //C 类型数组
+	const char* oldStr[]={"asdf","nkjn"};
+	auto arrOld=json.createArray(oldStr,2);
+    //或者 Json::Node temp(oldStr,2);
+	json("arrold")=arrOld;
+    //C++类型
+    node("arrarr")=vector<vector<int>>()={{1,2,3},{4,5,6}};
+	node("boolArr")=vector<bool>()={true,false};
+```
+
+> C的数组需要调用createArray,或者再生成一个node
+> 
+> vector类型可以直接添加,Vector最多支持二维,超过二维需要先创建node数组再加入
 
 ##### 初始化添加
 
 ```cpp
-    //create json in begin
-    Json json2={
-        {"float",12.3},
-        {"int",23},
-        {"bool",true},
-        {"str","string"},
-        {"null",nullptr},
-        {"arrFloat",{2.3,8.9,2.3}},
-        {"arrBool",{true,false}},
-        {"arrStr",{"chenxuan","create"}}
-    };
-    json2("new arr")=arr;
-    printf("new create:\n%s\n",json2());
-    //node add kry value
-    auto arr=json.createArray(vector<string>()={"str1","str2"});
-    const char* oldStr[]={"asdf","nkjn"};
-    vector<Json::Node> arrNode;
-    auto arrOld=json.createArray(oldStr,2);
-    json.changeSetting(2);
-    node("std")=string("koko");
-    node("str")="ok";
-    node("null")=nullptr;
-    node("bool")=true;
-    for(unsigned i=0;i<5;i++)
-        arrNode.push_back(node);
-    node("arrnode")=arrNode;
-    node("Int")=1000;
-    node("double")=1.43;
-    node("boolArr")=vector<bool>()={true,false};
-    node("nodeself")=node;
+Json json2={
+    {"float",12.3},
+    {"int",23},
+    {"bool",true},
+    {"str","string"},
+    {"null",nullptr},
+    {"stdstr",string("chenxuan")},
+    {"arrFloat",{2.3,8.9,2.3}},
+    {"arrBool",{true,false}},
+    {"arrStr",{{"chenxuan","create"},{"lover","xiaozhu"}}},
+    {"node",node},
+    {"arrVec",arrFlo}
+};
+printf("json2:\n%s \n",json2());
 ```
 
->  添加key Value方式均为("key")=Value
-> 
 > 获取结果的方式均为()
 
 #### 格式化json
