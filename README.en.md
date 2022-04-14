@@ -2,6 +2,8 @@
 
 A lightweight library for parsing, generating, and formatting json written in C++
 
+#### English [introduction](./README.en.md)
+
 ## author
 
 **chenxuan**
@@ -14,15 +16,13 @@ All code is included in the json.h header file, and all functions can be used by
 
 ## Production Instructions
 
-1. Except for a small part using STL, most of them are made in C
+1. The source code is about 1000 lines, including parsing, generating and formatting json data
 
-2. The source code is about 1000 lines, including parsing, generating and formatting json data
+2. Support the use of // and /**/ as comments
 
-3. Support the use of // and /**/ as comments
+3. Very easy to use. Short hands-on time
 
-4. Very easy to use. Short hands-on time
-
-5. You can generate json directly like go through {}, which is very convenient
+4. You can generate json directly like go through {}, which is very convenient
 
 ## Instructions
 
@@ -41,13 +41,22 @@ All code is included in the json.h header file, and all functions can be used by
 #### Get json data
 
 ```cpp
-    // find the key value
-    if(json["empt"]!=NULL)
-        for(unsigned i=0;i<json["empt"]->arr.size();i++)
-            printf("%f\n",json["empt"]->arr[i]->floVal);
-    if(json["first Name"]!=NULL)
-        printf("%s\n",json["first Name"]->strVal.c_str());
+// find the key value
+auto root=json.getRootObj();//get the result
+if(root["empt"]!=Json::npos)
+for(unsigned i=0;i<root["empt"].arr.size();i++)
+printf("%f\n",root["empt"][i].floVal);
+if(root["first Name"]!=Json::npos)
+printf("%s\n",root["first Name"].strVal.c_str());
+if(root["ept"]["ko"]!=Json::npos)
+printf("ept:ko:%lf\n",root["ept"]["ko"].floVal);
 ```
+
+> Get the parsed object first, then use [] to get the result
+> 
+> The array types are all object types, which can be obtained through .
+> 
+> if there is no result the return value is Json::npos
 
 #### Generate json data
 
@@ -60,58 +69,67 @@ All code is included in the json.h header file, and all functions can be used by
 ```
 
 > Objects can be initialized directly through {}
+> 
+> json itself is a node object, you can use the node method to add key-value pairs
 
-##### Create json array
+##### Add key-value pair
 
 ```cpp
-    //C model
-    const char* oldStr[]={"asdf","nkjn"};
-    auto arrOld=json.createArray(oldStr,2);
-    //C++ vector
-    //add Add directly
+node["stdStr"]=string("koko");//Add string
+node["strOld"]="ok";
+node["null"]=nullptr;//Add null type
+node["bool"]=true;//Add bool type
+node["Int"]=1000;//Add int
+node["double"]=1.43;//Add double
+printf("node:\n%s\n",node());
 ```
 
-C's arrays need to call createArray
+> Both C type and C++ string type can be added directly
+> 
+> Useless [] because the analysis of json data uses []
 
-> Vector of C++ can be added directly (there are examples below)
+##### Adding arrays and objects
+
+```cpp
+    //Add an object, you can create another node to add or directly {}
+node["nodeself"]=node;
+node["obj"]={
+{"status","ok"},
+{"vector",vector<string>()={"chenxuan","is","winner"}}
+};
+    //C type array
+    const char* oldStr[]={"asdf","nkjn"};
+    auto arrOld=json.createArray(oldStr,2);
+    //or Json::Node temp(oldStr,2);
+    json["arrold"]=arrOld;
+    //C++ type
+    node["arrarr"]=vector<vector<int>>()={{1,2,3},{4,5,6}};
+    node["boolArr"]=vector<bool>()={true,false};
+```
+
+> The array of C needs to call createArray, or generate a node again
+> 
+> The vector type can be added directly. Vector supports up to two dimensions. If it exceeds two dimensions, you need to create a node array before adding it.
 
 ##### Initialize add
 
 ```cpp
-    //create json in begin
-    Json json2={
-        {"float",12.3},
-        {"int",23},
-        {"bool",true},
-        {"str","string"},
-        {"null",nullptr},
-        {"arrFloat",{2.3,8.9,2.3}},
-        {"arrBool",{true,false}},
-        {"arrStr",{"chenxuan","create"}}
-    };
-    json2("new arr")=arr;
-    printf("new create:\n%s\n",json2());
-    //node add kry value
-    auto arr=json.createArray(vector<string>()={"str1","str2"});
-    const char* oldStr[]={"asdf","nkjn"};
-    vector<Json::Node> arrNode;
-    auto arrOld=json.createArray(oldStr,2);
-    json.changeSetting(2);
-    node("std")=string("koko");
-    node("str")="ok";
-    node("null")=nullptr;
-    node("bool")=true;
-    for(unsigned i=0;i<5;i++)
-        arrNode.push_back(node);
-    node("arrnode")=arrNode;
-    node("Int")=1000;
-    node("double")=1.43;
-    node("boolArr")=vector<bool>()={true,false};
-    node("nodeself")=node;
+Json json2={
+    {"float",12.3},
+    {"int",23},
+    {"bool",true},
+    {"str","string"},
+    {"null",nullptr},
+    {"stdstr",string("chenxuan")},
+    {"arrFloat",{2.3,8.9,2.3}},
+    {"arrBool",{true,false}},
+    {"arrStr",{{"chenxuan","create"},{"lover","xiaozhu"}}},
+    {"node",node},
+    {"arrVec",arrFlo}
+};
+printf("json2:\n%s \n",json2());
 ```
 
-> The way to add key Value is ("key")=Value
-> 
 > The way to get the result is ()
 
 #### format json
@@ -120,10 +138,6 @@ C's arrays need to call createArray
     const char* result=json.formatPrint(json.getRootObj());
     printf("%s\n",result);//json.getRootObj is get the root of create
 ```
-
-## Introduction video
-
-**[blibili](https://www.bilibili.com/video/BV1Nq4y1w7zY?from=search&seid=12628536326241937240&spm_id_from=333.337.0.0)**
 
 ## Supplementary notes
 
