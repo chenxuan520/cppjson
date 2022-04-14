@@ -42,14 +42,21 @@
 
 ```cpp
     // find the key value
-    if(json["empt"]!=NULL)
-        for(unsigned i=0;i<json["empt"]->arr.size();i++)
-            printf("%f\n",json["empt"]->arr[i]->floVal);
-    if(json["first Name"]!=NULL)
-        printf("%s\n",json["first Name"]->strVal.c_str());
+    auto root=json.getRootObj();//get the result
+    if(root["empt"]!=Json::npos)
+        for(unsigned i=0;i<root["empt"].arr.size();i++)
+            printf("%f\n",root["empt"][i].floVal);
+    if(root["first Name"]!=Json::npos)
+        printf("%s\n",root["first Name"].strVal.c_str());
+    if(root["ept"]["ko"]!=Json::npos)
+        printf("ept:ko:%lf\n",root["ept"]["ko"].floVal);
 ```
 
-> 数组类型全都是object类型,可以通过->获取内部
+> 先获取解析后的对象,再用[]获取结果
+> 
+> 数组类型全都是object类型,可以通过.获取内部
+> 
+> 如果没有结果返回值是Json::npos
 
 #### 生成json数据
 
@@ -68,12 +75,13 @@
 ##### 添加键值对
 
 ```cpp
-	node("stdStr")=string("koko");//添加字符串
-	node("strOld")="ok";
-	node("null")=nullptr;//添加null类型
-	node("bool")=true;//添加bool类型
-	node("Int")=1000;//添加int
-	node("double")=1.43;//添加double
+    node["stdStr"]=string("koko");//添加字符串
+    node["strOld"]="ok";
+    node["null"]=nullptr;//添加null类型
+    node["bool"]=true;//添加bool类型
+    node["Int"]=1000;//添加int
+    node["double"]=1.43;//添加double
+    printf("node:\n%s\n",node());
 ```
 
 > C类型和C++的string类型都可以直接添加
@@ -84,19 +92,19 @@
 
 ```cpp
     //添加对象,可以再创建一个node添加或者直接{}
-	node("nodeself")=node;
-	node("obj")={
-		{"status","ok"},
-		{"vector",vector<string>()={"chenxuan","is","winner"}}
-	};
+    node["nodeself"]=node;
+    node["obj"]={
+        {"status","ok"},
+        {"vector",vector<string>()={"chenxuan","is","winner"}}
+    };
     //C 类型数组
-	const char* oldStr[]={"asdf","nkjn"};
-	auto arrOld=json.createArray(oldStr,2);
+    const char* oldStr[]={"asdf","nkjn"};
+    auto arrOld=json.createArray(oldStr,2);
     //或者 Json::Node temp(oldStr,2);
-	json("arrold")=arrOld;
+    json["arrold"]=arrOld;
     //C++类型
-    node("arrarr")=vector<vector<int>>()={{1,2,3},{4,5,6}};
-	node("boolArr")=vector<bool>()={true,false};
+    node["arrarr"]=vector<vector<int>>()={{1,2,3},{4,5,6}};
+    node["boolArr"]=vector<bool>()={true,false};
 ```
 
 > C的数组需要调用createArray,或者再生成一个node
@@ -130,10 +138,6 @@ printf("json2:\n%s \n",json2());
     const char* result=json.formatPrint(json.getRootObj());
     printf("%s\n",result);//json.getRootObj is get the root of create
 ```
-
-## 介绍视频
-
-**[blibili](https://www.bilibili.com/video/BV1Nq4y1w7zY?from=search&seid=12628536326241937240&spm_id_from=333.337.0.0)**
 
 ## 补充说明
 

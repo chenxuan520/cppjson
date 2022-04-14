@@ -1,14 +1,15 @@
 #include <iostream>
 #include <fstream>
+#include "../server-for-static-web/class/memory.h"
 #include "./json.h"
 using namespace std;
 using namespace cppweb;
 void funtion()
 {
-	char* temp=(char*)malloc(sizeof(char)*600);
 	printf("please input the json file to read:");
-	scanf("%600s",temp);
-	std::ifstream in(temp, std::ios::in);
+	string name;
+	cin>>name;
+	std::ifstream in(name, std::ios::in);
 	std::istreambuf_iterator<char> beg(in), end;
 	std::string strdata(beg, end);
 	in.close();
@@ -41,9 +42,13 @@ void funtion()
 	vector<Json::Node> arrNode{
 		{
 			{"status","ok"},
+			{"name","chenxuan"},
+			{"arrFlo",arrFlo}
 		},
 		{
-			{"status","wrong"},
+			{"status","happy"},
+			{"name","xiaozhu"},
+			{"arrFlo",vector<double>()={1.2,3.4,6.7}}
 		}
 	};
 	node["arrarr"]=vector<vector<int>>()={{1,2,3},{4,5,6}};
@@ -70,8 +75,18 @@ void funtion()
 	json["emp arr"]=vector<int>();
 	printf("result:\n%s\n",json());
 	json.analyseText(json());
+	root=json.getRootObj();
 	printf("\n\n%s\n",json.formatPrint(json.getRootObj()));
-	free(temp);
+	if(root["node"]["arrNode"]!=Json::npos)
+	{
+		auto temp=root["node"]["arrNode"];
+		for(unsigned i=0;i<temp.arr.size();i++)
+		{
+			cout<<"name:"<<temp[i]["name"].strVal<<" status:"<<temp[i]["status"].strVal<<endl;
+			for(auto now:temp[i]["arrFlo"].arr)
+				cout<<now->floVal<<endl;
+		}
+	}
 	Json json2={
 		{"float",12.3},
 		{"int",23},
@@ -81,7 +96,7 @@ void funtion()
 		{"stdstr",string("chenxuan")},
 		{"arrFloat",{2.3,8.9,2.3}},
 		{"arrBool",{true,false}},
-		{"arrStr",{{"chenxuan","create"},{"lover","xiaozhu"}}},
+		{"arrObj",{{"chenxuan","create"},{"lover","xiaozhu"}}},
 		{"node",node},
 		{"arrVec",arrFlo},
 		{"empty arr",vector<int>()},
