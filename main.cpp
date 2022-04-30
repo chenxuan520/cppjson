@@ -1,6 +1,6 @@
 #include <iostream>
 #include <fstream>
-#include "../server-for-static-web/class/memory.h"
+#include "../server-for-static-web/src/class/memory.h"
 #include "./json.h"
 using namespace std;
 using namespace cppweb;
