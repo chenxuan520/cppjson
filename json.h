@@ -457,7 +457,7 @@ public:
 			else if(std::is_same<T,const char*>::value||std::is_same<T,char*>::value)
 				return addKeyValue(STRING,key,data);
 			else
-				return addKeyValue(EMPTY,key,data);
+				return addKeyValue(EMPTY,key,NULL);
 		}
 		template<typename T>
 		bool addKeyValue(const char* key,const std::vector<T>& data)
