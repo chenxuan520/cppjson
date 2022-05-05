@@ -623,7 +623,7 @@ public:
 		node.changeSetting(floNum);
 		return true;
 	}
-	static const char* create(const Node& temp)
+	static const char* createJson(const Node& temp)
 	{
 		return temp();
 	}
