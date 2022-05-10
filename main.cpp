@@ -1,6 +1,6 @@
 #include <iostream>
 #include <fstream>
-#include "../server-for-static-web/src/class/memory.h"
+/* #include "../server-for-static-web/src/class/memory.h" */
 #include "./json.h"
 using namespace std;
 using namespace cppweb;
@@ -38,7 +38,9 @@ void funtion()
 	//create an array to json
 	vector<double> arrFlo={1.2,3.4,4.5};
 	const char* oldStr[]={"asdf","nkjn"};
+	int oldInt[]={1,2,3,4};
 	auto arrOld=json.createArray(oldStr,2);
+	auto intOld=json.createArray(oldInt,4);
 	vector<Json::Node> arrNode{
 		{
 			{"status","ok"},
@@ -70,6 +72,7 @@ void funtion()
 	json["node"]=node;
 	json["numInt"]=1000;
 	json["arrold"]=arrOld;
+	json["int old"]=intOld;
 	json["arrint"]=vector<int>()={1,2,3};
 	json["arrFlo"]=arrFlo;
 	json["emp arr"]=vector<int>();
