@@ -443,21 +443,34 @@ public:
 			result+='}';
 			return true;
 		}
-		template<typename T>
-		bool addKeyValue(const char* key,T data)
+		inline bool addKeyValue(const char* key,int data)
 		{
-			if(std::is_same<T,int>::value)
-				return addKeyValue(INT,key,data);
-			else if(std::is_same<T,double>::value)
-				return addKeyValue(FLOAT,key,data);
-			else if(std::is_same<T,bool>::value)
-				return addKeyValue(BOOL,key,data);
-			else if(std::is_same<T,Node>::value)
-				return addKeyValue(OBJ,key,&data);
-			else if(std::is_same<T,const char*>::value||std::is_same<T,char*>::value)
-				return addKeyValue(STRING,key,data);
-			else
-				return addKeyValue(EMPTY,key,NULL);
+			return addKeyValue(INT,key,data);
+		}
+		inline bool addKeyValue(const char* key,double data)
+		{
+			return addKeyValue(FLOAT,key,data);
+		}
+		inline bool addKeyValue(const char* key,bool data)
+		{
+			return addKeyValue(BOOL,key,data);
+		}
+		inline bool addKeyValue(const char* key,Node data)
+		{
+			return addKeyValue(OBJ,key,&data);
+		}
+		inline bool addKeyValue(const char* key,char* data)
+		{
+			return addKeyValue(STRING,key,data);
+		}
+		inline bool addKeyValue(const char* key,const char* data)
+		{
+			return addKeyValue(STRING,key,data);
+		}
+		template<typename T>
+		bool addKeyValue(const char* key,T)
+		{
+			return addKeyValue(EMPTY,key,NULL);
 		}
 		template<typename T>
 		bool addKeyValue(const char* key,const std::vector<T>& data)
@@ -623,7 +636,7 @@ public:
 		node.changeSetting(floNum);
 		return true;
 	}
-	static const char* create(const Node& temp)
+	static const char* createJson(const Node& temp)
 	{
 		return temp();
 	}
