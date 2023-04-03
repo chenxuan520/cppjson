@@ -888,8 +888,15 @@ private:
 			error="text wrong";
 			return NULL;
 		}
-		for(unsigned i=0;now+i<nextOne;i++)
+		for(unsigned i=0;now+i<nextOne;i++){
+			if (*(now+i)=='\\') {
+				i+=1;
+				if(now+i>=nextOne){
+					break;
+				}
+			}
 			buffer+=*(now+i);
+		}
 		return nextOne;
 	}
 	void findNum(const char* begin,TypeJson type,void* pnum)

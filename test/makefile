@@ -1,3 +1,3 @@
 all: main
-main:main.cpp json.h
+main:main.cpp
 	g++ -g main.cpp -o main
