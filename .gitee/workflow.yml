@@ -1,0 +1,22 @@
+version: 1.0
+jobs:
+  build:
+    runner: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        type: git
+        args:
+          clone_url: $CI_REPOSITORY_URL
+        dir: $CI_PROJECT_DIR
+      - name: Install Dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y build-essential
+      - name: Run test
+        run: |
+          cd test
+          make
+          ./main
+    trigger:
+      branches:
+        - master

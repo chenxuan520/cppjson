@@ -1,4 +1,4 @@
-name: Build and run code
+name: test
 
 on:
   push:
@@ -15,7 +15,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y build-essential
-      - name: Build and run code
+      - name: Run test
         run: |
           cd test
           make
