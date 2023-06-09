@@ -54,7 +54,7 @@ let g:Term_project_task=[
 			\'name'       : 'test',
 			\'command'    : 'make;./main',
 			\'mode'       : 'term',
-			\'path'       : s:pwd,
+			\'path'       : s:root."/test",
 			\'close'      : 0,
 			\'type'       : 'vsplit',
 			\},
