@@ -14,15 +14,18 @@ stages:
     trigger: auto
     executor: []
     steps:
-      - step: build@gcc
-        name: build_gcc
-        displayName: GCC 构建
-        gccVersion: '9.4'
-        commands:
+      - step: execute@docker
+        name: execute_by_docker
+        displayName: run_test
+        certificate: ''
+        image: ubuntu:20.04
+        command:
+          - '# 请在此输入您想执行的脚本'
+          - sudo apt-get update
+          - sudo apt-get install -y build-essential
           - cd test
           - make
           - ./main
-        caches: []
         notify: []
         strategy:
           retry: '0'
