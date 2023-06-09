@@ -1,0 +1,28 @@
+version: '1.0'
+name: test
+displayName: test
+triggers:
+  trigger: auto
+  push:
+    branches:
+      precise:
+        - master
+stages:
+  - name: stage-db52d565
+    displayName: 测试
+    strategy: naturally
+    trigger: auto
+    executor: []
+    steps:
+      - step: build@gcc
+        name: build_gcc
+        displayName: GCC 构建
+        gccVersion: '9.4'
+        commands:
+          - cd test
+          - make
+          - ./main
+        caches: []
+        notify: []
+        strategy:
+          retry: '0'
