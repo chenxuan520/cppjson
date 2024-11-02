@@ -25,9 +25,9 @@ let s:pwd=expand('%:p:h')
 let g:Term_project_task=[
 			\{
 			\'name'       : 'build',
-			\'command'    : 'g++ -O2 '.expand('%'),
+			\'command'    : 'make',
 			\'mode'       : 'quickfix',
-			\'path'       : s:root,
+			\'path'       : s:root.'/test',
 			\'close'      : 2,
 			\'type'       : 'split',
 			\'key'        : '\1',
@@ -36,9 +36,9 @@ let g:Term_project_task=[
 			\},
 			\{
 			\'name'       : 'run',
-			\'command'    : './a.out',
+			\'command'    : './main',
 			\'mode'       : 'term',
-			\'path'       : s:root,
+			\'path'       : s:root.'/test',
 			\'close'      : 0,
 			\'type'       : 'vsplit',
 			\'key'        : '\2',
