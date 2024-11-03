@@ -1,5 +1,4 @@
-#ifndef _JSON_H_
-#define _JSON_H_
+#pragma once
 #include <initializer_list>
 #include <iostream>
 #include <stack>
@@ -10,7 +9,7 @@
 #include <type_traits>
 #include <unordered_map>
 #include <vector>
-namespace cppweb {
+namespace cppjson {
 class Json {
 public:
   enum TypeJson { // object type
@@ -56,11 +55,11 @@ public:
         }
         now = now->next_obj;
       }
-      return Json::npos;
+      return Json::npos();
     }
     Object &operator[](unsigned pos) {
       if (this->type != ARRAY || this->arr.size() <= pos)
-        return Json::npos;
+        return Json::npos();
       else
         return *this->arr[pos];
     }
@@ -77,7 +76,10 @@ public:
       return *this;
     }
   };
-  static Object npos;
+  static Object &npos() {
+    static Object npos;
+    return npos;
+  }
   class Node;
 
 private:
@@ -527,7 +529,7 @@ public:
     if (obj_ != NULL)
       return *obj_;
     else
-      return Json::npos;
+      return Json::npos();
   }
   inline const char *err_msg() { return err_msg_; }
   inline bool ChangeSetting(unsigned floNum) {
@@ -951,6 +953,4 @@ private:
     buffer += "]";
   }
 };
-Json::Object Json::npos;
-} // namespace cppweb
-#endif
+} // namespace cppjson

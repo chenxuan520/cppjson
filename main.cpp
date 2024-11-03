@@ -2,7 +2,7 @@
 #include <fstream>
 #include <iostream>
 using namespace std;
-using namespace cppweb;
+using namespace cppjson;
 void funtion() {
   printf("please input the json file to read:");
   string name;
@@ -22,12 +22,12 @@ void funtion() {
   printf("%s\n", result);
   // find the key value
   auto root = json.GetRootObj();
-  if (root["empt"] != Json::npos)
+  if (root["empt"] != Json::npos())
     for (unsigned i = 0; i < root["empt"].arr.size(); i++)
       printf("%f\n", root["empt"][i].flo_val);
-  if (root["first Name"] != Json::npos)
+  if (root["first Name"] != Json::npos())
     printf("%s\n", root["first Name"].str_val.c_str());
-  if (root["ept"]["io"] != Json::npos)
+  if (root["ept"]["io"] != Json::npos())
     printf("ept:ko:%lf\n", root["ept"]["ko"].flo_val);
   // create a new json text
   auto node = json.CreateObject(
@@ -69,7 +69,7 @@ void funtion() {
   json.Parse(json());
   root = json.GetRootObj();
   printf("\n\n%s\n", json.FormatPrint(json.GetRootObj()));
-  if (root["node"]["arrNode"] != Json::npos) {
+  if (root["node"]["arrNode"] != Json::npos()) {
     auto temp = root["node"]["arrNode"];
     for (unsigned i = 0; i < temp.arr.size(); i++) {
       cout << "name:" << temp[i]["name"].str_val
