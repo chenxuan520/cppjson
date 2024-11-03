@@ -23,12 +23,12 @@ public:
     EMPTY = 7
   };
   struct Object {
+    friend class Json;
     TypeJson type;
     TypeJson arr_type;
     std::string key;
     std::string str_val;
     std::vector<Object *> arr;
-    Object *obj_val;
     Object *next_obj;
     double flo_val;
     int int_val;
@@ -75,6 +75,9 @@ public:
       }
       return *this;
     }
+
+  protected:
+    Object *obj_val;
   };
   static Object &npos() {
     static Object npos;
