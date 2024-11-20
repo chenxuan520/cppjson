@@ -18,14 +18,15 @@ stages:
         name: execute_by_docker
         displayName: run_test
         certificate: ''
-        image: ubuntu:20.04
+        image: hub.atomgit.com/amd64/ubuntu:23.10
         command:
           - '# 请在此输入您想执行的脚本'
           - apt-get update
-          - apt-get install -y build-essential
+          - apt-get install -y build-essential cmake git
+          - git submodule update --init --recursive --depth=1
           - cd test
-          - make
-          - ./main
+          - ./build.sh
+          - ./build/test
         notify: []
         strategy:
           retry: '0'
