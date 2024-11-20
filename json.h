@@ -1,4 +1,5 @@
 #pragma once
+#include <functional>
 #include <initializer_list>
 #include <iostream>
 #include <stack>
@@ -132,38 +133,38 @@ private:
 public:
   class Node {
   private:
-    std::string result;
-    std::string key;
-    const char *error;
-    unsigned flo_num;
-    bool is_array;
+    std::string result_;
+    std::string key_;
+    const char *error_;
+    unsigned flo_num_;
+    bool is_array_;
 
   public:
     explicit Node(bool isArr = false) {
       if (!isArr)
-        result = "{}";
+        result_ = "{}";
       else
-        result = "[]";
-      is_array = isArr;
-      flo_num = 3;
-      is_array = false;
+        result_ = "[]";
+      is_array_ = isArr;
+      flo_num_ = 3;
+      is_array_ = false;
     }
     template <typename T>
     explicit Node(const std::vector<T> &data, unsigned floNum = 3) : Node() {
-      is_array = true;
-      result = "[]";
-      this->flo_num = floNum;
-      addArray(data);
+      is_array_ = true;
+      result_ = "[]";
+      this->flo_num_ = floNum;
+      AddArray(data);
     }
     template <typename T>
     explicit Node(const T *data, unsigned len, unsigned floNum = 3) : Node() {
       std::vector<T> arr(len);
       for (unsigned i = 0; i < len; i++)
         arr[i] = data[i];
-      is_array = true;
-      result = "[]";
-      this->flo_num = floNum;
-      addArray((const std::vector<T> &)arr);
+      is_array_ = true;
+      result_ = "[]";
+      this->flo_num_ = floNum;
+      AddArray((const std::vector<T> &)arr);
     }
     Node(std::initializer_list<std::pair<std::string, InitType>> initList)
         : Node() {
@@ -172,85 +173,89 @@ public:
     void InitWithList(
         std::initializer_list<std::pair<std::string, InitType>> initList) {
       for (auto iter = initList.begin(); iter != initList.end(); iter++)
-        addKeyValue(ARRAY, iter->first.c_str(), iter->second.val.c_str());
+        AddKeyValue(ARRAY, iter->first.c_str(), iter->second.val.c_str());
     }
-    inline const char *operator()() const { return result.c_str(); }
-    inline const char *getStr() const { return result.c_str(); }
+    inline const char *operator()() const { return result_.c_str(); }
+    inline const char *getStr() const { return result_.c_str(); }
     Node &operator[](const char *key) {
-      this->key = key;
+      this->key_ = key;
       return *this;
     }
     template <typename T> Node &operator=(T &data) {
-      addKeyValue(key.c_str(), data);
+      AddKeyValue(key_.c_str(), data);
       return *this;
     }
     template <typename T> Node &operator=(T &&data) {
-      addKeyValue(key.c_str(), data);
+      AddKeyValue(key_.c_str(), data);
       return *this;
     }
     Node &operator=(std::string data) {
-      addKeyValue(key.c_str(), data.c_str());
+      AddKeyValue(key_.c_str(), data.c_str());
       return *this;
     }
     Node &operator=(
         std::initializer_list<std::pair<std::string, InitType>> initList) {
       Node node(initList);
-      addKeyValue(key.c_str(), node);
+      AddKeyValue(key_.c_str(), node);
       return *this;
     }
-    unsigned inline GetLen() { return result.size(); }
+    unsigned inline GetLen() { return result_.size(); }
     bool ChangeSetting(unsigned floNum) {
       if (floNum > 255) {
-        error = "flonum must less 256";
+        error_ = "flonum must less 256";
         return false;
       }
-      this->flo_num = floNum;
+      this->flo_num_ = floNum;
       return true;
     }
-    inline const char *lastError() { return error; }
+    inline const char *LastError() { return error_; }
 
   private:
-    template <typename T> bool addArray(const std::vector<T> &arr) {
-      if (arr.size() == 0)
-        return false;
-      if (std::is_same<T, int>::value)
-        return addArray(INT, &arr[0], arr.size());
-      else if (std::is_same<T, double>::value)
-        return addArray(FLOAT, &arr[0], arr.size());
-      else if (std::is_same<T, char *>::value ||
-               std::is_same<T, const char *>::value)
-        return addArray(STRING, &arr[0], arr.size());
-      else if (std::is_same<T, std::string>::value)
-        return addArray(STRUCT, &arr[0], arr.size());
-      else if (std::is_same<T, Node>::value)
-        return addArray(OBJ, &arr[0], arr.size());
-      else
-        return addArray(EMPTY, NULL, arr.size());
-      return true;
+    bool AddArray(const std::vector<std::string> &arr) {
+      return AddArray(STRUCT, &arr[0], arr.size());
+    }
+    bool AddArray(const std::vector<int> &arr) {
+      return AddArray(INT, &arr[0], arr.size());
+    }
+    bool AddArray(const std::vector<double> &arr) {
+      return AddArray(FLOAT, &arr[0], arr.size());
+    }
+    bool AddArray(const std::vector<const char *> &arr) {
+      return AddArray(STRING, &arr[0], arr.size());
+    }
+    bool AddArray(const std::vector<Node> &arr) {
+      return AddArray(OBJ, &arr[0], arr.size());
+    }
+    template <typename T> bool AddArray(const std::vector<T> &arr) {
+      std::vector<Node> temp(arr.size());
+      for (int i = 0; i < arr.size(); i++) {
+        arr[i].DumpToJson(temp[i]);
+      }
+      return AddArray(temp);
     }
     template <typename T>
-    bool addArray(const std::vector<std::vector<T>> &arr) {
+    bool AddArray(const std::vector<std::vector<T>> &arr) {
       std::vector<Node> temp;
       for (auto &now : arr)
         temp.push_back(Node(now));
-      return addArray(temp);
+      return AddArray(temp);
     }
-    bool addArray(const std::vector<bool> &arr) {
+    bool AddArray(const std::vector<bool> &arr) {
       if (arr.size() == 0)
         return true;
       bool *temp = (bool *)malloc(sizeof(bool) * arr.size());
       if (temp == NULL) {
-        error = "malloc wrong";
+        error_ = "malloc wrong";
         return false;
       }
       for (unsigned i = 0; i < arr.size(); i++)
         temp[i] = arr[i];
-      addArray(BOOL, temp, arr.size());
+      AddArray(BOOL, temp, arr.size());
       free(temp);
       return true;
     }
-    bool addArray(TypeJson type, const void *arr, unsigned len) {
-      if (arr == NULL || !is_array || len == 0)
+    bool AddArray(TypeJson type, const void *arr, unsigned len) {
+      if (arr == NULL || !is_array_ || len == 0)
         return true;
       char word[128] = {0};
       int *arrInt = (int *)arr;
@@ -259,77 +264,77 @@ public:
       Node *arrNode = (Node *)arr;
       char **arrStr = (char **)arr;
       std::string *arrStd = (std::string *)arr;
-      if (*(result.end() - 1) == ']') {
-        if (result.size() > 2)
-          *(result.end() - 1) = ',';
+      if (*(result_.end() - 1) == ']') {
+        if (result_.size() > 2)
+          *(result_.end() - 1) = ',';
         else
-          result.erase(result.end() - 1);
+          result_.erase(result_.end() - 1);
       }
       switch (type) {
       case INT:
         for (unsigned i = 0; i < len; i++)
-          result += std::to_string(arrInt[i]) + ",";
+          result_ += std::to_string(arrInt[i]) + ",";
         break;
       case FLOAT:
         for (unsigned i = 0; i < len; i++) {
           memset(word, 0, sizeof(char) * 128);
-          sprintf(word, "%.*lf,", flo_num, arrFlo[i]);
-          result += word;
+          snprintf(word, 128, "%.*lf,", flo_num_, arrFlo[i]);
+          result_ += word;
         }
         break;
       case STRING:
         for (unsigned i = 0; i < len; i++) {
-          result += '\"';
-          result += arrStr[i];
-          result += '\"';
-          result += ',';
+          result_ += '\"';
+          result_ += arrStr[i];
+          result_ += '\"';
+          result_ += ',';
         }
         break;
       case STRUCT:
         for (unsigned i = 0; i < len; i++)
-          result += '\"' + arrStd[i] + '\"' + ',';
+          result_ += '\"' + arrStd[i] + '\"' + ',';
         break;
       case BOOL:
         for (unsigned i = 0; i < len; i++) {
           if (arrBool[i])
-            result += "true";
+            result_ += "true";
           else
-            result += "false";
-          result += ',';
+            result_ += "false";
+          result_ += ',';
         }
         break;
       case EMPTY:
         for (unsigned i = 0; i < len; i++) {
-          result += "null";
-          result += ',';
+          result_ += "null";
+          result_ += ',';
         }
         break;
       case ARRAY:
       case OBJ:
         for (unsigned i = 0; i < len; i++) {
-          result += arrNode[i]();
-          result += ',';
+          result_ += arrNode[i]();
+          result_ += ',';
         }
         break;
       }
-      *(result.end() - 1) = ']';
+      *(result_.end() - 1) = ']';
       return true;
     }
-    bool addKeyValue(TypeJson type, const char *key, ...) {
+    bool AddKeyValue(TypeJson type, const char *key, ...) {
       if (key == NULL) {
-        error = "key null";
+        error_ = "key null";
         return false;
       }
       va_list args;
       va_start(args, key);
-      if (*(result.end() - 1) == '}') {
-        result.erase(result.end() - 1);
-        if (result.size() > 1)
-          result += ',';
+      if (*(result_.end() - 1) == '}') {
+        result_.erase(result_.end() - 1);
+        if (result_.size() > 1)
+          result_ += ',';
       }
-      result += '\"';
-      result += key;
-      result += "\":";
+      result_ += '\"';
+      result_ += key;
+      result_ += "\":";
       char word[128] = {0};
       int valInt = 0;
       char *valStr = NULL;
@@ -339,84 +344,89 @@ public:
       switch (type) {
       case INT:
         valInt = va_arg(args, int);
-        result += std::to_string(valInt);
+        result_ += std::to_string(valInt);
         break;
       case FLOAT:
         valFlo = va_arg(args, double);
         memset(word, 0, sizeof(char) * 128);
-        sprintf(word, "%.*lf", flo_num, valFlo);
-        result += word;
+        snprintf(word, 128, "%.*lf", flo_num_, valFlo);
+        result_ += word;
         break;
       case STRING:
         valStr = va_arg(args, char *);
         if (valStr == NULL) {
-          error = "null input";
+          error_ = "null input";
           return false;
         }
-        result += '\"';
-        result += valStr;
-        result += '\"';
+        result_ += '\"';
+        result_ += valStr;
+        result_ += '\"';
         break;
       case EMPTY:
-        result += "null";
+        result_ += "null";
         break;
       case BOOL:
         valBool = va_arg(args, int);
         if (valBool == true)
-          result += "true";
+          result_ += "true";
         else
-          result += "false";
+          result_ += "false";
         break;
       case ARRAY:
         valStr = va_arg(args, char *);
         if (valStr == NULL) {
-          error = "null input";
+          error_ = "null input";
           return false;
         }
-        result += valStr;
+        result_ += valStr;
         break;
       case OBJ:
         valStr = va_arg(args, char *);
         valNode = (Node *)valStr;
         if (valStr == NULL) {
-          error = "null input";
+          error_ = "null input";
           return false;
         }
-        result += (*valNode)();
+        result_ += (*valNode)();
         break;
       default:
-        error = "can not insert this type";
-        result += '}';
+        error_ = "can not insert this type";
+        result_ += '}';
         return false;
       }
-      result += '}';
+      result_ += '}';
       return true;
     }
-    inline bool addKeyValue(const char *key, int data) {
-      return addKeyValue(INT, key, data);
+    inline bool AddKeyValue(const char *key, int data) {
+      return AddKeyValue(INT, key, data);
     }
-    inline bool addKeyValue(const char *key, double data) {
-      return addKeyValue(FLOAT, key, data);
+    inline bool AddKeyValue(const char *key, double data) {
+      return AddKeyValue(FLOAT, key, data);
     }
-    inline bool addKeyValue(const char *key, bool data) {
-      return addKeyValue(BOOL, key, data);
+    inline bool AddKeyValue(const char *key, bool data) {
+      return AddKeyValue(BOOL, key, data);
     }
-    inline bool addKeyValue(const char *key, Node data) {
-      return addKeyValue(OBJ, key, &data);
+    inline bool AddKeyValue(const char *key, Node data) {
+      return AddKeyValue(OBJ, key, &data);
     }
-    inline bool addKeyValue(const char *key, char *data) {
-      return addKeyValue(STRING, key, data);
+    inline bool AddKeyValue(const char *key, const char *data) {
+      return AddKeyValue(STRING, key, data);
     }
-    inline bool addKeyValue(const char *key, const char *data) {
-      return addKeyValue(STRING, key, data);
+    inline bool AddKeyValue(const char *key, const std::string &data) {
+      return AddKeyValue(STRING, key, data.c_str());
     }
-    template <typename T> bool addKeyValue(const char *key, T) {
-      return addKeyValue(EMPTY, key, NULL);
+    inline bool AddKeyValue(const char *key, const std::nullptr_t &) {
+      return AddKeyValue(EMPTY, key, NULL);
+    }
+    template <typename T> bool AddKeyValue(const char *key, const T &data) {
+      Node node;
+      data.DumpToJson(node);
+      return AddKeyValue(key, node);
     }
     template <typename T>
-    bool addKeyValue(const char *key, const std::vector<T> &data) {
-      Node node(data, flo_num);
-      return addKeyValue(key, node);
+    bool AddKeyValue(const char *key, const std::vector<T> &data) {
+      Node node(data, flo_num_);
+      return AddKeyValue(key, node);
     }
   };
 
@@ -437,38 +447,14 @@ public:
       : Json() {
     node_.InitWithList(initList);
   }
-  Json(const char *jsonText) : Json() {
-    if (jsonText == NULL || strlen(jsonText) == 0) {
-      err_msg_ = "message error";
-      return;
-    }
-    text_ = (char *)malloc(strlen(jsonText) + 10);
-    if (text_ == NULL) {
-      err_msg_ = "malloc wrong";
-      return;
-    }
-    memset(text_, 0, strlen(jsonText) + 10);
-    strcpy(text_, jsonText);
-    deleteComment();
-    deleteSpace();
-    if (false == pairBracket()) {
-      err_msg_ = "pair bracket wrong";
-      return;
-    }
-    if (text_[0] != '{') {
-      err_msg_ = "text wrong";
-      return;
-    }
-    obj_ = analyseObj(text_, bracket_[text_]);
-    if (obj_ == NULL)
-      return;
-  }
+  Json(const char *jsonText) : Json() { Parse(jsonText); }
   Json(const Json &old) = delete;
   ~Json() {
-    deleteNode(obj_);
+    DeleteNode(obj_);
     if (text_ != NULL)
       free(text_);
   }
+  bool Parse(const std::string &jsonText) { return Parse(jsonText.c_str()); }
   bool Parse(const char *jsonText) {
     if (jsonText == NULL || strlen(jsonText) == 0) {
       err_msg_ = "message error";
@@ -483,9 +469,9 @@ public:
     }
     memset(text_, 0, strlen(jsonText) + 10);
     strcpy(text_, jsonText);
-    deleteComment();
-    deleteSpace();
-    if (false == pairBracket()) {
+    DeleteComment();
+    DeleteSpace();
+    if (false == PairBracket()) {
       err_msg_ = "pair bracket wrong";
       return false;
     }
@@ -494,8 +480,8 @@ public:
       return false;
     }
     if (obj_ != NULL)
-      deleteNode(obj_);
-    obj_ = analyseObj(text_, bracket_[text_]);
+      DeleteNode(obj_);
+    obj_ = AnalyseObj(text_, bracket_[text_]);
     if (obj_ == NULL)
       return false;
     return true;
@@ -504,7 +490,7 @@ public:
     formatStr_.clear();
     if (obj_ == NULL)
       return NULL;
-    printObj(formatStr_, &example);
+    PrintObj(formatStr_, &example);
     return formatStr_.c_str();
   }
   inline Node CreateObject() { return Node(); }
@@ -519,6 +505,7 @@ public:
     return Node(data);
   }
   inline const char *operator()() const { return node_(); }
+  inline const char *Dump() const { return node_(); }
   inline const char *GetStr() const { return node_(); }
   Json &operator[](const char *key) {
     nowKey_ = key;
@@ -544,10 +531,47 @@ public:
     node_.ChangeSetting(floNum);
     return true;
   }
+
+public:
   static const char *CreateJson(const Node &temp) { return temp(); }
 
+  template <typename T>
+  static int Parse(const std::string &json_text, T &result) {
+    Json json;
+    json.Parse(json_text);
+    if (json.Parse(json_text) == false) {
+      return -1;
+    }
+    return result.ParseFromJson(json.GetRootObj());
+  }
+
+  template <typename T>
+  static int Parse(const std::string &json_text, T &result,
+                   std::function<int(Object &, T &)> parse_func) {
+    Json json;
+    json.Parse(json_text);
+    if (json.Parse(json_text) == false) {
+      return -1;
+    }
+    return parse_func(json.GetRootObj(), result);
+  }
+
+  template <typename T> static std::string Dump(T &result) {
+    Node node;
+    result.DumpToJson(node);
+    return Json::CreateJson(node);
+  }
+
+  template <typename T>
+  static std::string Dump(const T &result,
+                          std::function<int(const T &, Node &)> format_func) {
+    Node node;
+    format_func(result, node);
+    return Json::CreateJson(node);
+  }
+
 private:
-  Object *analyseObj(char *begin, char *end) {
+  Object *AnalyseObj(char *begin, char *end) {
     Object *root = new Object, *last = root;
     root->type = STRUCT;
     char *now = begin + 1, *next = now;
@@ -555,7 +579,7 @@ private:
     *end = 0;
     while (now < end) {
       Object *nextObj = new Object;
-      now = findString(now, wordStr_);
+      now = FindString(now, wordStr_);
       if (now == NULL) {
         err_msg_ = "find key wrong";
         return NULL;
@@ -564,7 +588,7 @@ private:
       now += 2;
       if (*now == '\"') {
         nextObj->type = STRING;
-        now = findString(now, wordStr_);
+        now = FindString(now, wordStr_);
         if (now == NULL) {
           err_msg_ = "string judge wrong";
           return NULL;
@@ -593,7 +617,7 @@ private:
           return root;
         }
         nextObj->type = ARRAY;
-        nextObj->arr_type = analyseArray(now, next, nextObj->arr);
+        nextObj->arr_type = AnalyseArray(now, next, nextObj->arr);
         now = next + 1;
         if (*now == ',')
           now++;
@@ -604,7 +628,7 @@ private:
           return root;
         }
         nextObj->type = OBJ;
-        nextObj->obj_val = analyseObj(now, next);
+        nextObj->obj_val = AnalyseObj(now, next);
         now = next + 1;
         if (*now == ',')
           now++;
@@ -635,23 +659,23 @@ private:
     *end = temp;
     return root;
   }
-  TypeJson analyseArray(char *begin, char *end, std::vector<Object *> &arr) {
+  TypeJson AnalyseArray(char *begin, char *end, std::vector<Object *> &arr) {
     char *now = begin + 1, *next = end;
     Object *nextObj = NULL;
     if ((*now >= '0' && *now <= '9') || *now == '-') {
       next = now;
       while (next < end && *next != ',')
         next++;
-      TypeJson type = judgeNum(now, next);
+      TypeJson type = JudgeNum(now, next);
       while (now < end && now != NULL) {
         nextObj = new Object;
         nextObj->is_data = true;
         nextObj->type = type;
         if (nextObj->type == INT) {
-          findNum(now, type, &nextObj->int_val);
+          FindNum(now, type, &nextObj->int_val);
           arr.push_back(nextObj);
         } else {
-          findNum(now, type, &nextObj->flo_val);
+          FindNum(now, type, &nextObj->flo_val);
           arr.push_back(nextObj);
         }
         now = strchr(now + 1, ',');
@@ -661,7 +685,7 @@ private:
       nextObj->arr_type = type;
     } else if (*now == '\"') {
       while (now < end && now != NULL) {
-        now = findString(now, wordStr_);
+        now = FindString(now, wordStr_);
         if (now == NULL) {
           err_msg_ = "fing string wrong";
           return STRING;
@@ -691,7 +715,7 @@ private:
     } else if (*now == '{') {
       while (now < end && now != NULL) {
         next = bracket_[now];
-        nextObj = analyseObj(now, next);
+        nextObj = AnalyseObj(now, next);
         nextObj->type = OBJ;
         nextObj->is_data = true;
         arr.push_back(nextObj);
@@ -705,7 +729,7 @@ private:
       while (now < end && now != NULL) {
         next = bracket_[now];
         nextObj = new Object;
-        TypeJson type = analyseArray(now, next, nextObj->arr);
+        TypeJson type = AnalyseArray(now, next, nextObj->arr);
         nextObj->type = ARRAY;
         nextObj->arr_type = type;
         nextObj->is_data = true;
@@ -724,7 +748,7 @@ private:
     }
     return nextObj->type;
   }
-  char *findString(char *begin, std::string &buffer) {
+  char *FindString(char *begin, std::string &buffer) {
     char *now = begin + 1, *nextOne = now;
     buffer.clear();
     nextOne = strchr(now, '\"');
@@ -746,7 +770,7 @@ private:
     }
     return nextOne;
   }
-  void findNum(const char *begin, TypeJson type, void *pnum) {
+  void FindNum(const char *begin, TypeJson type, void *pnum) {
     if (type == INT) {
       if (sscanf(begin, "%d", (int *)pnum) < 1)
         err_msg_ = "num wrong";
@@ -755,13 +779,13 @@ private:
         err_msg_ = "num wrong";
     }
   }
-  inline TypeJson judgeNum(const char *begin, const char *end) {
+  inline TypeJson JudgeNum(const char *begin, const char *end) {
     for (unsigned i = 0; i + begin < end; i++)
       if (begin[i] == '.')
         return FLOAT;
     return INT;
   }
-  void deleteComment() {
+  void DeleteComment() {
     unsigned flag = 0;
     for (unsigned i = 0; i < strlen(text_); i++) {
       if (text_[i] == '\"' && text_[i - 1] != '\\')
@@ -787,7 +811,7 @@ private:
         continue;
     }
   }
-  void deleteSpace() {
+  void DeleteSpace() {
     unsigned j = 0, k = 0;
     unsigned flag = 0;
     for (j = 0, k = 0; text_[j] != '\0'; j++) {
@@ -799,20 +823,20 @@ private:
     }
     text_[k] = 0;
   }
-  void deleteNode(Object *root) {
+  void DeleteNode(Object *root) {
     if (root == NULL)
       return;
     if (root->next_obj != NULL)
-      deleteNode(root->next_obj);
+      DeleteNode(root->next_obj);
     if (root->arr.size() > 0)
       for (unsigned i = 0; i < root->arr.size(); i++)
-        deleteNode(root->arr[i]);
+        DeleteNode(root->arr[i]);
     if (root->obj_val != NULL)
-      deleteNode(root->obj_val);
+      DeleteNode(root->obj_val);
     delete root;
     root = NULL;
   }
-  bool pairBracket() {
+  bool PairBracket() {
     unsigned flag = 0;
     std::stack<char *> sta;
     bracket_.clear();
@@ -837,7 +861,7 @@ private:
       return false;
     return true;
   }
-  void printObj(std::string &buffer, const Object *obj) {
+  void PrintObj(std::string &buffer, const Object *obj) {
     if (obj == NULL) {
       buffer += "{}";
       err_msg_ = "message wrong";
@@ -861,7 +885,7 @@ private:
         buffer += std::to_string(now->int_val) + ',';
         break;
       case FLOAT:
-        sprintf(word, "%.*lf,", floNum_, now->flo_val);
+        snprintf(word, 128, "%.*lf,", floNum_, now->flo_val);
         buffer += word;
         break;
       case STRING:
@@ -874,11 +898,11 @@ private:
           buffer += "false,";
         break;
       case OBJ:
-        printObj(buffer, now->obj_val);
+        PrintObj(buffer, now->obj_val);
         buffer += ',';
         break;
       case ARRAY:
-        printArr(buffer, now->arr_type, now->arr);
+        PrintArr(buffer, now->arr_type, now->arr);
         buffer += ',';
         break;
       case EMPTY:
@@ -900,7 +924,7 @@ private:
     buffer += "}";
     return;
   }
-  void printArr(std::string &buffer, TypeJson type,
+  void PrintArr(std::string &buffer, TypeJson type,
                 const std::vector<Object *> &arr) {
     unsigned deep = 0;
     char word[256] = {0};
@@ -918,7 +942,7 @@ private:
         buffer += std::to_string(arr[i]->int_val) + ',';
         break;
       case FLOAT:
-        sprintf(word, "%.*lf,", floNum_, arr[i]->flo_val);
+        snprintf(word, 128, "%.*lf,", floNum_, arr[i]->flo_val);
         buffer += word;
         break;
       case STRING:
@@ -931,11 +955,11 @@ private:
           buffer += "false,";
         break;
       case OBJ:
-        printObj(buffer, arr[i]);
+        PrintObj(buffer, arr[i]);
         buffer += ',';
         break;
       case ARRAY:
-        printArr(buffer, arr[i]->arr_type, arr[i]->arr);
+        PrintArr(buffer, arr[i]->arr_type, arr[i]->arr);
         buffer += ',';
         break;
       case EMPTY:
