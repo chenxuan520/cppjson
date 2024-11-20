@@ -11,7 +11,7 @@ include_directories(../third_party/cpptest)
 
 # link dir add
 # link_directories()
-# link_libraries(-lpthread)
+link_libraries(-lpthread)
 
 # add source
 add_executable(test ./main.cpp)
