@@ -18,7 +18,7 @@ stages:
         name: execute_by_docker
         displayName: run_test
         certificate: ''
-        image: hub.atomgit.com/amd64/ubuntu:22.04
+        image: registry.cn-hangzhou.aliyuncs.com/chenxuan/ubuntu:22.04
         command:
           - '# 请在此输入您想执行的脚本'
           - apt-get update
